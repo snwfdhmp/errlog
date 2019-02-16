@@ -23,7 +23,6 @@ package errlog
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -62,8 +61,6 @@ func Debug(uErr error) {
 	printLines(filepath, lineNumber)
 	fmt.Println("Stack trace:")
 	printStack(stages[2:])
-
-	os.Exit(1)
 }
 
 func findFuncLine(lines []string, lineNumber int) int {
