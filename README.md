@@ -103,4 +103,11 @@ exit status 1
 
 ## Feedback
 
-I appreciate feedbacks : martin@ordoclic.fr.
+Feel free to open an issue for any feedback.
+
+If you report bugs I fix them asap.
+
+## Contributions
+
+PR are accepted as soon as they follow Golang common standards.
+For more information: https://golang.org/doc/effective_go.html
