@@ -1,4 +1,4 @@
-// package errlog aims to simplify Golang program debugging.
+// Package errlog provides simple objects to enhance Golang source code debugging
 //
 // Example result:
 //
@@ -75,8 +75,15 @@ import (
 	"github.com/spf13/afero"
 )
 
+//Logger interface allows to log an error, or to print source code lines. Check out NewLogger function to learn more about Logger objects and Config.
 type Logger interface {
 	Debug(err error)
+	//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
+	PrintSource(filename string, lineNumber int)
+	//SetConfig replaces current config with the given one
+	SetConfig(cfg *Config)
+	//Config returns current config
+	Config() *Config
 }
 
 type logger struct {
@@ -84,6 +91,7 @@ type logger struct {
 	stackDepthOverload int
 }
 
+//NewLogger creates a new logger struct with given config
 func NewLogger(cfg *Config) Logger {
 	return &logger{
 		Config:             cfg,
@@ -91,23 +99,39 @@ func NewLogger(cfg *Config) Logger {
 	}
 }
 
+func (l *logger) SetConfig(cfg *Config) {
+	l.Config = cfg
+}
+
+func (l *logger) Config() *Config {
+	return l.Config
+}
+
+//Config holds the configuration for a logger
 type Config struct {
-	LinesBefore        int
-	LinesAfter         int
-	PrintStack         bool
-	PrintSource        bool
-	PrintError         bool
-	ExitOnDebugSuccess bool
+	LinesBefore        int  //How many lines to print *before* the error line when printing source code
+	LinesAfter         int  //How many lines to print *after* the error line when printing source code
+	PrintStack         bool //Shall we print stack trace ? yes/no
+	PrintSource        bool //Shall we print source code along ? yes/no
+	PrintError         bool //Shall we print the error of Debug(err) ? yes/no
+	ExitOnDebugSuccess bool //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
 }
 
 var (
+	/*
+		Note for contributors/users : these regexp have been made by me, taking my own source code as example for finding the right one to use.
+		I use gofmt for source code formatting, that means this will work on most cases.
+		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
+		Feel free to create an issue or send a PR.
+	*/
 	regexpParseStack    = regexp.MustCompile(`((((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
 	regexpCodeReference = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
 	regexpCallArgs      = regexp.MustCompile(`((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
 	regexpCallingObject = regexp.MustCompile(`((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
 	regexpFuncLine      = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 
-	DefaultLogger = logger{
+	//DefaultLogger logger implements default configuration for a logger
+	DefaultLogger = &logger{
 		Config: &Config{
 			LinesBefore:        4,
 			LinesAfter:         2,
@@ -121,7 +145,7 @@ var (
 	linesBefore = 4
 	linesAfter  = 2
 
-	fs = afero.NewOsFs()
+	fs = afero.NewOsFs() //fs is at package level because I think it needn't be scoped to loggers
 )
 
 // Debug prints useful informations for debug such as surrounding code, stack trace, ...
@@ -137,7 +161,7 @@ func (l *logger) Debug(uErr error) {
 
 	if l.Config.PrintSource {
 		filepath, lineNumber := parseRef(stages[0])
-		l.PrintLines(filepath, lineNumber)
+		l.PrintSource(filepath, lineNumber)
 	}
 
 	if l.Config.PrintStack {
@@ -150,6 +174,7 @@ func (l *logger) Debug(uErr error) {
 	}
 }
 
+//Overload adds depths to remove when parsing next stack trace
 func (l *logger) Overload(amount int) {
 	l.stackDepthOverload += amount
 }
@@ -178,7 +203,8 @@ func parseRef(refLine string) (string, int) {
 	return ref[0], lineNumber
 }
 
-func (l *logger) PrintLines(filepath string, lineNumber int) {
+//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
+func (l *logger) PrintSource(filepath string, lineNumber int) {
 	fmt.Printf("line %d of %s:%d\n", lineNumber, filepath, lineNumber)
 
 	b, err := afero.ReadFile(fs, filepath)
@@ -256,6 +282,7 @@ func printStack(stages []string) {
 	}
 }
 
+//Debug is a shortcut for DefaultLogger.Debug
 func Debug(uErr error) {
 	DefaultLogger.Overload(1)
 	DefaultLogger.Debug(uErr)
@@ -265,11 +292,12 @@ func getStackTrace(deltaDepth int) []string {
 	return regexpParseStack.FindAllString(string(debug.Stack()), -1)[2+deltaDepth:]
 }
 
-//PrintStack prints the stack
+//PrintStack prints the current stack trace
 func PrintStack() {
 	printStack(getStackTrace(1))
 }
 
+//PrintStackMinuss prints the current stack trace minus the amount of depth in parameter
 func PrintStackMinus(depthToRemove int) {
 	printStack(getStackTrace(1 + depthToRemove))
 }
