@@ -2,46 +2,46 @@
 //
 // Example result:
 //
-// ```
-// $ go run myfailingapp.go
-// Program starting
-// error in main.main: something failed here
-// line 13 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go
-// 9: func main() {
-// 10:     fmt.Println("Program starting")
-// 11:     err := errors.New("something failed here")
-// 12:
-// 13:     errlog.Debug(err)
-// 14:
-// 15:     fmt.Println("End of the program")
-// 16: }
-// exit status 1
-// ```
+//
+// 		$ go run myfailingapp.go
+// 		Program starting
+// 		error in main.main: something failed here
+// 		line 13 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go
+// 		9: func main() {
+// 		10:     fmt.Println("Program starting")
+// 		11:     err := errors.New("something failed here")
+// 		12:
+// 		13:     errlog.Debug(err)
+// 		14:
+// 		15:     fmt.Println("End of the program")
+// 		16: }
+// 		exit status 1
+//
 //
 // You can configure your own logger with these options :
 //
-// ```golang
-// type Config struct {
-// 	LinesBefore        int
-// 	LinesAfter         int
-// 	PrintStack         bool
-// 	PrintSource        bool
-// 	PrintError         bool
-// 	ExitOnDebugSuccess bool
-// }
-// ```
+//
+// 		type Config struct {
+// 			LinesBefore        int
+// 			LinesAfter         int
+// 			PrintStack         bool
+// 			PrintSource        bool
+// 			PrintError         bool
+// 			ExitOnDebugSuccess bool
+// 		}
+//
 //
 // Example :
 //
-// ```golang
-// debug := errlog.NewLogger(&errlog.Config{
-// 	LinesBefore:        2,
-// 	LinesAfter:         1,
-// 	PrintError:         true,
-// 	PrintSource:        true,
-// 	PrintStack:         false,
-// 	ExitOnDebugSuccess: true,
-// })
+//
+// 		debug := errlog.NewLogger(&errlog.Config{
+// 			LinesBefore:        2,
+// 			LinesAfter:         1,
+// 			PrintError:         true,
+// 			PrintSource:        true,
+// 			PrintStack:         false,
+// 			ExitOnDebugSuccess: true,
+// 		})
 //
 // // ...
 // if err != nil {
