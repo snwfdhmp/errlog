@@ -1,5 +1,4 @@
-/*
-package errlog aims to simplify Golang program debugging.
+/* package errlog aims to simplify Golang program debugging.
 
 Example result:
 
