@@ -77,6 +77,9 @@ import (
 
 //Logger interface allows to log an error, or to print source code lines. Check out NewLogger function to learn more about Logger objects and Config.
 type Logger interface {
+	// Debug wraps up Logger debugging funcs related to an error
+	// If the given error is nil, it returns immediately
+	// It relies on Logger.Config to determine what will be printed or executed
 	Debug(err error)
 	//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
 	PrintSource(filename string, lineNumber int)
