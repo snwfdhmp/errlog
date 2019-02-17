@@ -291,9 +291,9 @@ func printStack(stages []string) {
 }
 
 //Debug is a shortcut for DefaultLogger.Debug.
-func Debug(uErr error) {
+func Debug(uErr error) bool {
 	DefaultLogger.Overload(1) // Prevents from adding this func to the stack trace
-	DefaultLogger.Debug(uErr)
+	return DefaultLogger.Debug(uErr)
 }
 
 //getStackTrace parses stack trace from runtime/debug.Stack() and returns it (minus 2 depths for (i) runtime/debug.Stack (ii) itself)
