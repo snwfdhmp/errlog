@@ -57,8 +57,7 @@ func wrapingFunc() {
 func someBigFunction() {
 	someSmallFunction()
 
-	if err := someNastyFunction(); err != nil {
-		errlog.Debug(err)
+	if err := someNastyFunction(); errlog.Debug(err) {
 		return
 	}
 
@@ -86,14 +85,13 @@ line 26 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:26
 22: func someBigFunction() {
 23: 	someSmallFunction()
 24: 
-25: 	if err := someNastyFunction(); err != nil {
-26: 		errlog.Debug(err)
-27: 		return
-28: 	}
-29: 
-30: 	someSmallFunction()
-31: }
-32: 
+25: 	if err := someNastyFunction(); errlog.Debug(err) {
+26: 		return
+27: 	}
+28: 
+29: 	someSmallFunction()
+30: }
+31: 
 Stack trace:
   main.someBigFunction():26
     main.wrapingFunc():19
@@ -128,13 +126,6 @@ debug := errlog.NewLogger(&errlog.Config{
 	ExitOnDebugSuccess: true,
 })
 
-// ...
-if err != nil {
-	debug.Debug(err)
-	return
-}
-```
-
 Outputs :
 
 ```
@@ -142,10 +133,9 @@ Error in main.someBigFunction(): I'm failing for no reason
 line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
 33: func someBigFunction() {
 ...
-40:     if err := someNastyFunction(); err != nil {
-41:             debug.Debug(err)
-42:             return
-43:     }
+40:     if err := someNastyFunction(); debug.Debug(err) {
+41:             return
+42:     }
 exit status 1
 ```
 
