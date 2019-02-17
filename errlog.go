@@ -1,70 +1,68 @@
-/* package errlog aims to simplify Golang program debugging.
-
-Example result:
-
-```
-$ go run myfailingapp.go
-Program starting
-error in main.main: something failed here
-line 13 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go
-9: func main() {
-10:     fmt.Println("Program starting")
-11:     err := errors.New("something failed here")
-12:
-13:     errlog.Debug(err)
-14:
-15:     fmt.Println("End of the program")
-16: }
-exit status 1
-```
-
-You can configure your own logger with these options :
-
-```golang
-type Config struct {
-	LinesBefore        int
-	LinesAfter         int
-	PrintStack         bool
-	PrintSource        bool
-	PrintError         bool
-	ExitOnDebugSuccess bool
-}
-```
-
-Example :
-
-```golang
-debug := errlog.NewLogger(&errlog.Config{
-	LinesBefore:        2,
-	LinesAfter:         1,
-	PrintError:         true,
-	PrintSource:        true,
-	PrintStack:         false,
-	ExitOnDebugSuccess: true,
-})
-
+// package errlog aims to simplify Golang program debugging.
+//
+// Example result:
+//
+// ```
+// $ go run myfailingapp.go
+// Program starting
+// error in main.main: something failed here
+// line 13 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go
+// 9: func main() {
+// 10:     fmt.Println("Program starting")
+// 11:     err := errors.New("something failed here")
+// 12:
+// 13:     errlog.Debug(err)
+// 14:
+// 15:     fmt.Println("End of the program")
+// 16: }
+// exit status 1
+// ```
+//
+// You can configure your own logger with these options :
+//
+// ```golang
+// type Config struct {
+// 	LinesBefore        int
+// 	LinesAfter         int
+// 	PrintStack         bool
+// 	PrintSource        bool
+// 	PrintError         bool
+// 	ExitOnDebugSuccess bool
+// }
+// ```
+//
+// Example :
+//
+// ```golang
+// debug := errlog.NewLogger(&errlog.Config{
+// 	LinesBefore:        2,
+// 	LinesAfter:         1,
+// 	PrintError:         true,
+// 	PrintSource:        true,
+// 	PrintStack:         false,
+// 	ExitOnDebugSuccess: true,
+// })
+//
+// // ...
+// if err != nil {
+// 	debug.Debug(err)
+// 	return
+// }
+// ```
+//
+// Outputs :
+//
+// ```
+// Error in main.someBigFunction(): I'm failing for no reason
+// line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
+// 33: func someBigFunction() {
 // ...
-if err != nil {
-	debug.Debug(err)
-	return
-}
-```
-
-Outputs :
-
-```
-Error in main.someBigFunction(): I'm failing for no reason
-line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
-33: func someBigFunction() {
-...
-40:     if err := someNastyFunction(); err != nil {
-41:             debug.Debug(err)
-42:             return
-43:     }
-exit status 1
-```
-*/
-
+// 40:     if err := someNastyFunction(); err != nil {
+// 41:             debug.Debug(err)
+// 42:             return
+// 43:     }
+// exit status 1
+// ```
 package errlog
 
 import (
