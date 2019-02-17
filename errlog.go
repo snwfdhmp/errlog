@@ -213,6 +213,14 @@ func (l *logger) PrintLines(filepath string, lineNumber int) {
 		}
 	}
 
+	//clean blank lines at the start
+	for minLine <= maxLine {
+		if strings.Trim(lines[minLine], " \n\t") != "" {
+			break
+		}
+		minLine++
+	}
+
 	//free some memory
 	lines = lines[minLine:]
 	maxLine -= minLine
