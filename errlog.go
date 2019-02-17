@@ -84,7 +84,7 @@ type logger struct {
 	stackDepthOverload int
 }
 
-func NewLogger(cfg *Config) *logger {
+func NewLogger(cfg *Config) Logger {
 	return &logger{
 		Config:             cfg,
 		stackDepthOverload: 0,
