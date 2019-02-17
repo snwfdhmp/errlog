@@ -101,6 +101,54 @@ Stack trace:
 exit status 1
 ```
 
+## Configure like you need
+
+You can configure your own logger with these options :
+
+```golang
+type Config struct {
+	LinesBefore        int
+	LinesAfter         int
+	PrintStack         bool
+	PrintSource        bool
+	PrintError         bool
+	ExitOnDebugSuccess bool
+}
+```
+
+Example :
+
+```golang
+debug := errlog.NewLogger(&errlog.Config{
+	LinesBefore:        2,
+	LinesAfter:         1,
+	PrintError:         true,
+	PrintSource:        true,
+	PrintStack:         false,
+	ExitOnDebugSuccess: true,
+})
+
+// ...
+if err != nil {
+	debug.Debug(err)
+	return
+}
+```
+
+Outputs :
+
+```
+Error in main.someBigFunction(): I'm failing for no reason
+line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
+33: func someBigFunction() {
+...
+40:     if err := someNastyFunction(); err != nil {
+41:             debug.Debug(err)
+42:             return
+43:     }
+exit status 1
+```
+
 ## Feedback
 
 Feel free to open an issue for any feedback.
