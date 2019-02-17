@@ -80,7 +80,8 @@ type Logger interface {
 	// Debug wraps up Logger debugging funcs related to an error
 	// If the given error is nil, it returns immediately
 	// It relies on Logger.Config to determine what will be printed or executed
-	Debug(err error)
+	// It returns whether err != nil
+	Debug(err error) bool
 	//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
 	PrintSource(filename string, lineNumber int)
 	//SetConfig replaces current config with the given one
@@ -90,24 +91,24 @@ type Logger interface {
 }
 
 type logger struct {
-	Config             *Config
+	config             *Config
 	stackDepthOverload int
 }
 
 //NewLogger creates a new logger struct with given config
 func NewLogger(cfg *Config) Logger {
 	return &logger{
-		Config:             cfg,
+		config:             cfg,
 		stackDepthOverload: 0,
 	}
 }
 
 func (l *logger) SetConfig(cfg *Config) {
-	l.Config = cfg
+	l.config = cfg
 }
 
 func (l *logger) Config() *Config {
-	return l.Config
+	return l.config
 }
 
 //Config holds the configuration for a logger
@@ -135,7 +136,7 @@ var (
 
 	//DefaultLogger logger implements default configuration for a logger
 	DefaultLogger = &logger{
-		Config: &Config{
+		config: &Config{
 			LinesBefore:        4,
 			LinesAfter:         2,
 			PrintStack:         true,
@@ -154,29 +155,31 @@ var (
 // Debug wraps up Logger debugging funcs related to an error
 // If the given error is nil, it returns immediately
 // It relies on Logger.Config to determine what will be printed or executed
-func (l *logger) Debug(uErr error) {
+func (l *logger) Debug(uErr error) bool {
 	if uErr == nil {
-		return
+		return false
 	}
 	stages := getStackTrace(1 + l.stackDepthOverload)
 	l.stackDepthOverload = 0
-	if l.Config.PrintError {
+	if l.config.PrintError {
 		fmt.Printf("\nError in %s: %s\n", regexpCallArgs.FindString(stages[0]), color.YellowString(uErr.Error()))
 	}
 
-	if l.Config.PrintSource {
+	if l.config.PrintSource {
 		filepath, lineNumber := parseRef(stages[0])
 		l.PrintSource(filepath, lineNumber)
 	}
 
-	if l.Config.PrintStack {
+	if l.config.PrintStack {
 		fmt.Println("Stack trace:")
 		printStack(stages)
 	}
 
-	if l.Config.ExitOnDebugSuccess {
+	if l.config.ExitOnDebugSuccess {
 		os.Exit(1)
 	}
+
+	return true
 }
 
 //Overload adds depths to remove when parsing next stack trace
@@ -208,7 +211,7 @@ func parseRef(refLine string) (string, int) {
 	return ref[0], lineNumber
 }
 
-//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
+//PrintSource prints certain lines of source code of a file, using (*logger).config as configurations
 func (l *logger) PrintSource(filepath string, lineNumber int) {
 	fmt.Printf("line %d of %s:%d\n", lineNumber, filepath, lineNumber)
 
@@ -219,8 +222,8 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 	lines := strings.Split(string(b), "\n")
 
 	// set lines range
-	minLine := lineNumber - l.Config.LinesBefore
-	maxLine := lineNumber + l.Config.LinesAfter
+	minLine := lineNumber - l.config.LinesBefore
+	maxLine := lineNumber + l.config.LinesAfter
 	if minLine < 0 {
 		minLine = 0
 	}
@@ -303,7 +306,7 @@ func PrintStack() {
 	printStack(getStackTrace(1))
 }
 
-//PrintStackMinuss prints the current stack trace minus the amount of depth in parameter
+//PrintStackMinus prints the current stack trace minus the amount of depth in parameter
 func PrintStackMinus(depthToRemove int) {
 	printStack(getStackTrace(1 + depthToRemove))
 }
