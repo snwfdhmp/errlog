@@ -23,6 +23,7 @@ package errlog
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"runtime/debug"
 	"strconv"
@@ -32,6 +33,31 @@ import (
 	"github.com/spf13/afero"
 )
 
+type Logger interface {
+	Debug(err error)
+}
+
+type logger struct {
+	Config             *Config
+	stackDepthOverload int
+}
+
+func NewLogger(cfg *Config) *logger {
+	return &logger{
+		Config:             cfg,
+		stackDepthOverload: 0,
+	}
+}
+
+type Config struct {
+	LinesBefore        int
+	LinesAfter         int
+	PrintStack         bool
+	PrintSource        bool
+	PrintError         bool
+	ExitOnDebugSuccess bool
+}
+
 var (
 	regexpParseStack    = regexp.MustCompile(`((((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
 	regexpCodeReference = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
@@ -39,28 +65,51 @@ var (
 	regexpCallingObject = regexp.MustCompile(`((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
 	regexpFuncLine      = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 
+	DefaultLogger = logger{
+		Config: &Config{
+			LinesBefore:        4,
+			LinesAfter:         2,
+			PrintStack:         true,
+			PrintSource:        true,
+			PrintError:         true,
+			ExitOnDebugSuccess: false,
+		},
+	}
+
+	linesBefore = 4
+	linesAfter  = 2
+
 	fs = afero.NewOsFs()
 )
 
 // Debug prints useful informations for debug such as surrounding code, stack trace, ...
-func Debug(uErr error) {
-	stages := regexpParseStack.FindAllString(string(debug.Stack()), -1)
-
-	ref := strings.Split(regexpCodeReference.FindString(stages[2]), ":")
-	if len(ref) != 2 {
-		panic(fmt.Sprintf("len(ref) > 2;ref='%s';", ref))
+func (l *logger) Debug(uErr error) {
+	if uErr == nil {
+		return
 	}
-	filepath := ref[0]
-	lineNumber, err := strconv.Atoi(ref[1])
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse line number '%s': %s", ref[1], err))
+	stages := getStackTrace(1 + l.stackDepthOverload)
+	l.stackDepthOverload = 0
+	if l.Config.PrintError {
+		fmt.Printf("\nError in %s: %s\n", regexpCallArgs.FindString(stages[0]), color.YellowString(uErr.Error()))
 	}
 
-	fmt.Printf("\nerror in %s: %s\nline %d of %s:%d\n", regexpCallingObject.FindString(stages[2]), color.YellowString(uErr.Error()), lineNumber, filepath, lineNumber)
+	if l.Config.PrintSource {
+		filepath, lineNumber := parseRef(stages[0])
+		l.PrintLines(filepath, lineNumber)
+	}
 
-	printLines(filepath, lineNumber)
-	fmt.Println("Stack trace:")
-	printStack(stages[2:])
+	if l.Config.PrintStack {
+		fmt.Println("Stack trace:")
+		printStack(stages)
+	}
+
+	if l.Config.ExitOnDebugSuccess {
+		os.Exit(1)
+	}
+}
+
+func (l *logger) Overload(amount int) {
+	l.stackDepthOverload += amount
 }
 
 func findFuncLine(lines []string, lineNumber int) int {
@@ -73,15 +122,32 @@ func findFuncLine(lines []string, lineNumber int) int {
 	return -1
 }
 
-func printLines(filepath string, lineNumber int) {
+func parseRef(refLine string) (string, int) {
+	ref := strings.Split(regexpCodeReference.FindString(refLine), ":")
+	if len(ref) != 2 {
+		panic(fmt.Sprintf("len(ref) > 2;ref='%s';", ref))
+	}
+
+	lineNumber, err := strconv.Atoi(ref[1])
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse line number '%s': %s", ref[1], err))
+	}
+
+	return ref[0], lineNumber
+}
+
+func (l *logger) PrintLines(filepath string, lineNumber int) {
+	fmt.Printf("line %d of %s:%d\n", lineNumber, filepath, lineNumber)
+
 	b, err := afero.ReadFile(fs, filepath)
 	if err != nil {
 		panic(fmt.Sprintf("cannot read file '%s': %s;", filepath, err))
 	}
-
 	lines := strings.Split(string(b), "\n")
-	minLine := lineNumber - 10 //@todo to int
-	maxLine := lineNumber + 6
+
+	// set lines range
+	minLine := lineNumber - l.Config.LinesBefore
+	maxLine := lineNumber + l.Config.LinesAfter
 	if minLine < 0 {
 		minLine = 0
 	}
@@ -89,22 +155,45 @@ func printLines(filepath string, lineNumber int) {
 		maxLine = len(lines) - 1
 	}
 
+	lines = lines[:maxLine+1] //free some memory
+
+	//find func line and correct minLine if necessary
 	funcLine := findFuncLine(lines, lineNumber)
+	if funcLine > minLine {
+		minLine = funcLine + 1
+	}
+
+	//print func on first line
 	if funcLine != -1 && funcLine < minLine {
 		fmt.Println(color.RedString("%d: %s", funcLine+1, lines[funcLine]))
 		if funcLine < minLine-1 {
 			fmt.Println(color.YellowString("..."))
 		}
 	}
-	if funcLine > minLine {
-		minLine = funcLine
+
+	//free some memory
+	lines = lines[minLine:]
+	maxLine -= minLine
+	startLine := minLine
+	minLine = 0
+
+	//clean blank lines at the end
+	for maxLine >= minLine {
+		if strings.Trim(lines[maxLine], " \n\t") != "" {
+			break
+		}
+		maxLine--
 	}
-	for i := minLine; i < maxLine; i++ {
+
+	lines = lines[:maxLine+1]
+
+	//print lines of code
+	for i := minLine; i <= maxLine; i++ {
 		if i+1 == lineNumber {
-			fmt.Println(color.RedString("%d: %s", i+1, lines[i]))
+			fmt.Println(color.RedString("%d: %s", i+1+startLine, lines[i]))
 			continue
 		}
-		fmt.Println(color.YellowString("%d: %s", i+1, lines[i]))
+		fmt.Println(color.YellowString("%d: %s", i+1+startLine, lines[i]))
 	}
 }
 
@@ -115,4 +204,22 @@ func printStack(stages []string) {
 		}
 		fmt.Printf("%s:%s\n", regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
 	}
+}
+
+func Debug(uErr error) {
+	DefaultLogger.Overload(1)
+	DefaultLogger.Debug(uErr)
+}
+
+func getStackTrace(deltaDepth int) []string {
+	return regexpParseStack.FindAllString(string(debug.Stack()), -1)[2+deltaDepth:]
+}
+
+//PrintStack prints the stack
+func PrintStack() {
+	printStack(getStackTrace(1))
+}
+
+func PrintStackMinus(depthToRemove int) {
+	printStack(getStackTrace(1 + depthToRemove))
 }
