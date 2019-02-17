@@ -1,5 +1,5 @@
 /*
-errlog package aims to simplify Golang program debugging.
+package errlog aims to simplify Golang program debugging.
 
 Example result:
 
@@ -65,7 +65,6 @@ line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
 exit status 1
 ```
 */
-
 
 package errlog
 
