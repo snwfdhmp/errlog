@@ -128,10 +128,10 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack    = regexp.MustCompile(`((((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
+	regexpParseStack    = regexp.MustCompile(`((((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
 	regexpCodeReference = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
-	regexpCallArgs      = regexp.MustCompile(`((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
-	regexpCallingObject = regexp.MustCompile(`((([a-zA-Z]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
+	regexpCallArgs      = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
+	regexpCallingObject = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
 	regexpFuncLine      = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 
 	//DefaultLogger logger implements default configuration for a logger
@@ -139,7 +139,7 @@ var (
 		config: &Config{
 			LinesBefore:        4,
 			LinesAfter:         2,
-			PrintStack:         true,
+			PrintStack:         false,
 			PrintSource:        true,
 			PrintError:         true,
 			ExitOnDebugSuccess: false,
@@ -273,7 +273,7 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 
 	//print lines of code
 	for i := minLine; i <= maxLine; i++ {
-		if i+1 == lineNumber {
+		if i+2 == lineNumber-startLine {
 			fmt.Println(color.RedString("%d: %s", i+1+startLine, lines[i]))
 			continue
 		}
