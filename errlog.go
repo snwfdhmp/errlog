@@ -1,4 +1,4 @@
-// Package errlog provides simple objects to enhance Golang source code debugging
+// Package errlog provides a simple object to enhance Go source code debugging
 //
 // Example result:
 //
@@ -148,7 +148,9 @@ var (
 	fs = afero.NewOsFs() //fs is at package level because I think it needn't be scoped to loggers
 )
 
-// Debug prints useful informations for debug such as surrounding code, stack trace, ...
+// Debug wraps up Logger debugging funcs related to an error
+// If the given error is nil, it returns immediately
+// It relies on Logger.Config to determine what will be printed or executed
 func (l *logger) Debug(uErr error) {
 	if uErr == nil {
 		return
@@ -282,12 +284,13 @@ func printStack(stages []string) {
 	}
 }
 
-//Debug is a shortcut for DefaultLogger.Debug
+//Debug is a shortcut for DefaultLogger.Debug.
 func Debug(uErr error) {
-	DefaultLogger.Overload(1)
+	DefaultLogger.Overload(1) // Prevents from adding this func to the stack trace
 	DefaultLogger.Debug(uErr)
 }
 
+//getStackTrace parses stack trace from runtime/debug.Stack() and returns it (minus 2 depths for (i) runtime/debug.Stack (ii) itself)
 func getStackTrace(deltaDepth int) []string {
 	return regexpParseStack.FindAllString(string(debug.Stack()), -1)[2+deltaDepth:]
 }

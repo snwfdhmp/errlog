@@ -1,4 +1,4 @@
-# Simple error logging for Go programs
+# A simple object to enhance Go source code debugging
 
 ## Get started
 
