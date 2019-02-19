@@ -21,8 +21,7 @@ import (
 ```golang
 func someFunc() {
     //...
-    if err != nil {
-        errlog.Debug(err)
+    if errlog.Debug(err) { // will debug & pass if err != nil, will ignore if err == nil
         return
     }
 }
