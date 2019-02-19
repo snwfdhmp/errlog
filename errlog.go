@@ -72,6 +72,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -82,8 +83,10 @@ type Logger interface {
 	// It relies on Logger.Config to determine what will be printed or executed
 	// It returns whether err != nil
 	Debug(err error) bool
-	//PrintSource prints certain lines of source code of a file, using (*logger).Config as configurations
-	PrintSource(filename string, lineNumber int)
+	//PrintSource prints lines based on given opts (see PrintSourceOptions type definition)
+	PrintSource(lines []string, opts PrintSourceOptions)
+	//DebugSource debugs a source file
+	DebugSource(filename string, lineNumber int)
 	//SetConfig replaces current config with the given one
 	SetConfig(cfg *Config)
 	//Config returns current config
@@ -128,11 +131,16 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack    = regexp.MustCompile(`((((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
-	regexpCodeReference = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
-	regexpCallArgs      = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
-	regexpCallingObject = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
-	regexpFuncLine      = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
+	regexpParseStack                 = regexp.MustCompile(`((((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
+	regexpCodeReference              = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
+	regexpCallArgs                   = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
+	regexpCallingObject              = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
+	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
+	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
+	regexpParseDebugLineParseVarName = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
+	regexpFindVarDefinition          = func(varName string) *regexp.Regexp {
+		return regexp.MustCompile(fmt.Sprintf(`%s[\s\:]*={1}([\s]*[a-zA-Z0-9\._]+)`, varName))
+	}
 
 	//DefaultLogger logger implements default configuration for a logger
 	DefaultLogger = &logger{
@@ -167,7 +175,7 @@ func (l *logger) Debug(uErr error) bool {
 
 	if l.config.PrintSource {
 		filepath, lineNumber := parseRef(stages[0])
-		l.PrintSource(filepath, lineNumber)
+		l.DebugSource(filepath, lineNumber)
 	}
 
 	if l.config.PrintStack {
@@ -187,16 +195,6 @@ func (l *logger) Overload(amount int) {
 	l.stackDepthOverload += amount
 }
 
-func findFuncLine(lines []string, lineNumber int) int {
-	for i := lineNumber; i > 0; i-- {
-		if regexpFuncLine.Match([]byte(lines[i])) {
-			return i
-		}
-	}
-
-	return -1
-}
-
 func parseRef(refLine string) (string, int) {
 	ref := strings.Split(regexpCodeReference.FindString(refLine), ":")
 	if len(ref) != 2 {
@@ -211,9 +209,63 @@ func parseRef(refLine string) (string, int) {
 	return ref[0], lineNumber
 }
 
-//PrintSource prints certain lines of source code of a file, using (*logger).config as configurations
-func (l *logger) PrintSource(filepath string, lineNumber int) {
-	fmt.Printf("line %d of %s:%d\n", lineNumber, filepath, lineNumber)
+type PrintSourceOptions struct {
+	FuncLine    int
+	StartLine   int
+	EndLine     int
+	Highlighted map[int][]int //map[lineIndex][columnstart, columnEnd] of chars to highlight
+}
+
+// PrintSource prints source code
+// Order :
+// 1. FuncLine
+// 2.
+func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
+	//print func on first line
+	if opts.FuncLine != -1 && opts.FuncLine < opts.StartLine {
+		fmt.Println(color.RedString("%d: %s", opts.FuncLine+1, lines[opts.FuncLine]))
+		if opts.FuncLine < opts.StartLine-1 { // append blank line if minLine is not next line
+			fmt.Println(color.YellowString("..."))
+		}
+	}
+
+	// === Free memory part saved from former PrintSource func, needs a bit of refactoring of new func to avoid breaking lines count
+	//
+	// //free some memory
+	// lines = lines[minLine:]
+	// //adjust variables with new slice specs
+	// maxLine -= minLine
+	// startLine := minLine // save this number still
+	// minLine = 0
+
+	// lines = lines[:maxLine+1]
+
+	for i := opts.StartLine; i < opts.EndLine; i++ {
+		highlightStart := -1
+		highlightEnd := -1
+		if _, ok := opts.Highlighted[i]; ok {
+			if len(opts.Highlighted[i]) == 2 { //if hightlight slice is in the right format
+				highlightStart = opts.Highlighted[i][0]
+				highlightEnd = opts.Highlighted[i][1]
+				if highlightEnd > len(lines[i])-1 {
+					highlightEnd = len(lines[i]) - 1
+				}
+			} else {
+				logrus.Debug("len(opts.Highlighted[i]) != 2; skipping highlight")
+			}
+		}
+
+		if highlightStart == -1 { //simple line
+			fmt.Printf("%d: %s\n", i+opts.StartLine+1, color.YellowString(lines[i]))
+		} else { // line with highlightings
+			fmt.Printf("%d: %s%s%s\n", i+opts.StartLine+1, color.YellowString(lines[i][:highlightStart]), color.RedString(lines[i][highlightStart:highlightEnd+1]), color.YellowString(lines[i][highlightEnd+1:]))
+		}
+	}
+}
+
+//DebugSource prints certain lines of source code of a file for debugging, using (*logger).config as configurations
+func (l *logger) DebugSource(filepath string, debugLineNumber int) {
+	fmt.Printf("line %d of %s:%d\n", debugLineNumber, filepath, debugLineNumber)
 
 	b, err := afero.ReadFile(fs, filepath)
 	if err != nil {
@@ -221,9 +273,11 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 	}
 	lines := strings.Split(string(b), "\n")
 
-	// set lines range
-	minLine := lineNumber - l.config.LinesBefore
-	maxLine := lineNumber + l.config.LinesAfter
+	// set line range to print based on config values and debugLineNumber
+	minLine := debugLineNumber - l.config.LinesBefore
+	maxLine := debugLineNumber + l.config.LinesAfter
+
+	// correct ouf of range values
 	if minLine < 0 {
 		minLine = 0
 	}
@@ -231,23 +285,7 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 		maxLine = len(lines) - 1
 	}
 
-	lines = lines[:maxLine+1] //free some memory
-
-	//find func line and correct minLine if necessary
-	funcLine := findFuncLine(lines, lineNumber)
-	if funcLine > minLine {
-		minLine = funcLine + 1
-	}
-
-	//print func on first line
-	if funcLine != -1 && funcLine < minLine {
-		fmt.Println(color.RedString("%d: %s", funcLine+1, lines[funcLine]))
-		if funcLine < minLine-1 {
-			fmt.Println(color.YellowString("..."))
-		}
-	}
-
-	//clean blank lines at the start
+	//clean leading blank lines
 	for minLine <= maxLine {
 		if strings.Trim(lines[minLine], " \n\t") != "" {
 			break
@@ -255,13 +293,7 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 		minLine++
 	}
 
-	//free some memory
-	lines = lines[minLine:]
-	maxLine -= minLine
-	startLine := minLine
-	minLine = 0
-
-	//clean blank lines at the end
+	//clean trailing blank lines
 	for maxLine >= minLine {
 		if strings.Trim(lines[maxLine], " \n\t") != "" {
 			break
@@ -269,16 +301,26 @@ func (l *logger) PrintSource(filepath string, lineNumber int) {
 		maxLine--
 	}
 
+	//free some memory from unused values
 	lines = lines[:maxLine+1]
 
-	//print lines of code
-	for i := minLine; i <= maxLine; i++ {
-		if i+2 == lineNumber-startLine {
-			fmt.Println(color.RedString("%d: %s", i+1+startLine, lines[i]))
-			continue
-		}
-		fmt.Println(color.YellowString("%d: %s", i+1+startLine, lines[i]))
+	//find func line and adjust minLine if below
+	funcLine := findFuncLine(lines, debugLineNumber)
+	if funcLine > minLine {
+		minLine = funcLine + 1
 	}
+
+	//try to find failing line if any
+	failingLineIndex, columnStart, columnEnd := findFailingLine(lines, funcLine, debugLineNumber)
+
+	l.PrintSource(lines, PrintSourceOptions{
+		FuncLine: funcLine,
+		Highlighted: map[int][]int{
+			failingLineIndex: []int{columnStart, columnEnd},
+		},
+		StartLine: minLine,
+		EndLine:   maxLine,
+	})
 }
 
 func printStack(stages []string) {
@@ -309,4 +351,47 @@ func PrintStack() {
 //PrintStackMinus prints the current stack trace minus the amount of depth in parameter
 func PrintStackMinus(depthToRemove int) {
 	printStack(getStackTrace(1 + depthToRemove))
+}
+
+func findFuncLine(lines []string, lineNumber int) int {
+	for i := lineNumber; i > 0; i-- {
+		if regexpFuncLine.Match([]byte(lines[i])) {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIndex, columnStart, columnEnd int) {
+	failingLineIndex = -1 //init error flag
+	reMatches := regexpParseDebugLineParseVarName.FindStringSubmatch(lines[debugLine-1])
+	if len(reMatches) < 2 {
+		return
+	}
+	varName := reMatches[1]
+	reFindVar := regexpFindVarDefinition(varName)
+	for i := debugLine; i >= funcLine; i-- {
+		index := reFindVar.FindStringSubmatchIndex(lines[i])
+		if index == nil {
+			continue
+		}
+
+		failingLineIndex = i
+		columnStart = index[0]
+		openedBrackets, closedBrackets := 0, 0
+		for j := index[1]; j < len(lines[i]); j++ {
+			if lines[i][j] == '(' {
+				openedBrackets += 1
+			} else if lines[i][j] == ')' {
+				closedBrackets += 1
+			}
+			if openedBrackets == closedBrackets {
+				columnEnd = j
+				return
+			}
+		}
+	}
+
+	return
 }
