@@ -127,7 +127,7 @@ debug := errlog.NewLogger(&errlog.Config{
 
 ### Another Example
 
-Errlog also finds the exact line where the error is defined.
+Errlog finds the exact line where the error is defined.
 
 ### Output
 
