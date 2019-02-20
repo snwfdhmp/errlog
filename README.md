@@ -2,7 +2,7 @@
 
 # A simple package to enhance Go source code debugging
 
-![Example](https://i.imgur.com/wPBrYqs.png)
+![Example](https://i.imgur.com/Ulf1RGw.png)
 
 ## Introduction
 
@@ -11,8 +11,6 @@ Use errlog to enhance your error logging with :
 - Code source highlight
 - Failing func recognition
 - Readable stack trace
-
-
 
 ## Get started
 
@@ -135,11 +133,15 @@ Errlog finds the exact line where the error is defined.
 
 ![Source Example: error earlier in the code](https://i.imgur.com/wPBrYqs.png)
 
+## Documentation
+
+Documentation can be found [here on godoc.org](https://github.com/snwfdhmp/errlog).
+
 ## Feedback
 
-Feel free to open an issue for any feedback.
+Feel free to open an issue for any feedback or suggestion.
 
-If you report bugs I fix them asap.
+I fix process issues quickly.
 
 ## Contributions
 
