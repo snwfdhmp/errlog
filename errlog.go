@@ -77,6 +77,11 @@ import (
 	"github.com/spf13/afero"
 )
 
+var (
+	debugMode = false
+	gopath    = os.Getenv("GOPATH")
+)
+
 //Logger interface allows to log an error, or to print source code lines. Check out NewLogger function to learn more about Logger objects and Config.
 type Logger interface {
 	// Debug wraps up Logger debugging funcs related to an error
@@ -101,6 +106,7 @@ func SetDebugMode(toggle bool) {
 	} else {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
+	debugMode = toggle
 }
 
 type logger struct {
@@ -115,10 +121,14 @@ func (l *logger) Printf(format string, data ...interface{}) {
 
 //NewLogger creates a new logger struct with given config
 func NewLogger(cfg *Config) Logger {
-	return &logger{
+	l := logger{
 		config:             cfg,
 		stackDepthOverload: 0,
 	}
+
+	l.Doctor()
+
+	return &l
 }
 
 func (l *logger) SetConfig(cfg *Config) {
@@ -190,6 +200,22 @@ func (l *logger) Doctor() (neededDoctor bool) {
 		l.config.PrintFunc = DefaultLoggerPrintFunc
 	}
 
+	if l.config.LinesBefore < 0 {
+		neededDoctor = true
+		logrus.Debugf("LinesBefore is '%d' but should not be <0. Setting to 0.", l.config.LinesBefore)
+		l.config.LinesBefore = 0
+	}
+
+	if l.config.LinesAfter < 0 {
+		neededDoctor = true
+		logrus.Debugf("LinesAfters is '%d' but should not be <0. Setting to 0.", l.config.LinesAfter)
+		l.config.LinesAfter = 0
+	}
+
+	if neededDoctor && !debugMode {
+		logrus.Warn("errlog: Doctor() has detected and fixed some problems on your logger configuration. It might have modified your configuration. Check logs by enabling debug. 'errlog.SetDebugMode(true)'.")
+	}
+
 	return
 }
 
@@ -197,9 +223,7 @@ func (l *logger) Doctor() (neededDoctor bool) {
 // If the given error is nil, it returns immediately
 // It relies on Logger.Config to determine what will be printed or executed
 func (l *logger) Debug(uErr error) bool {
-	if l.Doctor() {
-		logrus.Warn("Doctor() has detected and fixed some problems. It might have modified your configuration. Check logs by enabling debug. 'errlog.SetDebugMode(true)'.")
-	}
+	l.Doctor()
 	if uErr == nil {
 		return false
 	}
@@ -307,6 +331,7 @@ func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 
 //DebugSource prints certain lines of source code of a file for debugging, using (*logger).config as configurations
 func (l *logger) DebugSource(filepath string, debugLineNumber int) {
+	filepath = strings.Replace(filepath, gopath, "", -1)
 	l.Printf("line %d of %s:%d", debugLineNumber, filepath, debugLineNumber)
 
 	b, err := afero.ReadFile(fs, filepath)
