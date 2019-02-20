@@ -1,5 +1,15 @@
 # A simple package to enhance Go source code debugging
 
+## Introduction
+
+Use errlog to enhance your error logging with :
+
+- Code source highlight
+- Failing func recognition
+- Readable stack trace
+
+
+
 ## Get started
 
 1. Install with
@@ -123,7 +133,7 @@ type Config struct {
 }
 ```
 
-Example :
+### Example
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
@@ -135,9 +145,9 @@ debug := errlog.NewLogger(&errlog.Config{
 	PrintStack:         false,
 	ExitOnDebugSuccess: true,
 })
-````
+```
 
-Outputs :
+### Output
 
 ![Console Output](https://i.imgur.com/4aV67Tn.jpg)
 
