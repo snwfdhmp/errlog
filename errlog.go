@@ -387,7 +387,7 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 	l.PrintSource(lines, PrintSourceOptions{
 		FuncLine: funcLine,
 		Highlighted: map[int][]int{
-			failingLineIndex: []int{columnStart, columnEnd},
+			failingLineIndex: {columnStart, columnEnd},
 		},
 		StartLine: minLine,
 		EndLine:   maxLine,
