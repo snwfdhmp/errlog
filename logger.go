@@ -44,9 +44,18 @@ type Config struct {
 	DisableStackIndentation bool                                     //Shall we print stack vertically instead of indented
 }
 
+// PrintSourceOptions represents config for (*logger).PrintSource func
+type PrintSourceOptions struct {
+	FuncLine    int
+	StartLine   int
+	EndLine     int
+	Highlighted map[int][]int //map[lineIndex][columnstart, columnEnd] of chars to highlight
+}
+
+//logger holds logger object, implementing Logger interface
 type logger struct {
-	config             *Config
-	stackDepthOverload int
+	config             *Config //config for the logger
+	stackDepthOverload int     //stack depth to ignore when reading stack
 }
 
 //NewLogger creates a new logger struct with given config
@@ -112,11 +121,11 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 	lines := strings.Split(string(b), "\n")
 
 	// set line range to print based on config values and debugLineNumber
-	// and correct ouf of range values
-	minLine := max(debugLineNumber-l.config.LinesBefore, 0)
-	maxLine := min(debugLineNumber+l.config.LinesAfter, len(lines)-1)
+	minLine := debugLineNumber - l.config.LinesBefore
+	maxLine := debugLineNumber + l.config.LinesAfter
 
-	deleteBankLinesFromRange(lines, &minLine, &maxLine)
+	//delete blank lines from range and clean range if out of lines range
+	deleteBlankLinesFromRange(lines, &minLine, &maxLine)
 
 	//free some memory from unused values
 	lines = lines[:maxLine+1]
@@ -157,31 +166,20 @@ func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 	}
 
 	for i := opts.StartLine; i < opts.EndLine; i++ {
-		highlightStart := -1
-		highlightEnd := -1
-		if _, ok := opts.Highlighted[i]; ok {
-			if len(opts.Highlighted[i]) == 2 { //if hightlight slice is in the right format
-				highlightStart = opts.Highlighted[i][0]
-				highlightEnd = opts.Highlighted[i][1]
-				if highlightEnd > len(lines[i])-1 {
-					highlightEnd = len(lines[i]) - 1
-				}
-			} else {
-				logrus.Debug("len(opts.Highlighted[i]) != 2; skipping highlight")
-			}
+		if _, ok := opts.Highlighted[i]; !ok || len(opts.Highlighted[i]) != 2 {
+			l.Printf("%d: %s", i+1, color.YellowString(lines[i]))
+			continue
 		}
 
-		if highlightStart == -1 { //simple line
-			l.Printf("%d: %s", i+1, color.YellowString(lines[i]))
-		} else { // line with highlightings
-			logrus.Debugf("Next line should be highlighted from column %d to %d.", highlightStart, highlightEnd)
-			l.Printf("%d: %s%s%s", i+1, color.YellowString(lines[i][:highlightStart]), color.RedString(lines[i][highlightStart:highlightEnd+1]), color.YellowString(lines[i][highlightEnd+1:]))
-		}
+		hlStart := max(opts.Highlighted[i][0], 0)          //highlight column start
+		hlEnd := min(opts.Highlighted[i][1], len(lines)-1) //highlight column end
+		l.Printf("%d: %s%s%s", i+1, color.YellowString(lines[i][:hlStart]), color.RedString(lines[i][hlStart:hlEnd+1]), color.YellowString(lines[i][hlEnd+1:]))
 	}
 }
 
 func (l *logger) Doctor() (neededDoctor bool) {
 	neededDoctor = false
+
 	if l.config.PrintFunc == nil {
 		neededDoctor = true
 		logrus.Debug("PrintFunc not set for this logger. Replacing with DefaultLoggerPrintFunc.")
@@ -205,6 +203,18 @@ func (l *logger) Doctor() (neededDoctor bool) {
 	}
 
 	return
+}
+
+func (l *logger) printStack(stages []string) {
+	for i := len(stages) - 1; i >= 0; i-- {
+		padding := ""
+		if !l.config.DisableStackIndentation {
+			for j := 0; j < len(stages)-1-i; j++ {
+				padding += "  "
+			}
+		}
+		l.Printf("  %s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
+	}
 }
 
 //Printf is the function used to log

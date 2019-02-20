@@ -64,16 +64,13 @@
 package errlog
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
 var (
 	debugMode = false
+	fs        = afero.NewOsFs() //fs is at package level because I think it needn't be scoped to loggers
 )
 
 //SetDebugMode sets debug mode to On if toggle==true or Off if toggle==false. It changes log level an so displays more logs about whats happening. Useful for debugging.
@@ -84,44 +81,6 @@ func SetDebugMode(toggle bool) {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 	debugMode = toggle
-}
-
-var (
-	fs = afero.NewOsFs() //fs is at package level because I think it needn't be scoped to loggers
-)
-
-func parseRef(refLine string) (string, int) {
-	ref := strings.Split(regexpCodeReference.FindString(refLine), ":")
-	if len(ref) != 2 {
-		panic(fmt.Sprintf("len(ref) > 2;ref='%s';", ref))
-	}
-
-	lineNumber, err := strconv.Atoi(ref[1])
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse line number '%s': %s", ref[1], err))
-	}
-
-	return ref[0], lineNumber
-}
-
-// PrintSourceOptions represents config for (*logger).PrintSource func
-type PrintSourceOptions struct {
-	FuncLine    int
-	StartLine   int
-	EndLine     int
-	Highlighted map[int][]int //map[lineIndex][columnstart, columnEnd] of chars to highlight
-}
-
-func (l *logger) printStack(stages []string) {
-	for i := len(stages) - 1; i >= 0; i-- {
-		padding := ""
-		if !l.config.DisableStackIndentation {
-			for j := 0; j < len(stages)-1-i; j++ {
-				padding += "  "
-			}
-		}
-		l.Printf("  %s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
-	}
 }
 
 //Debug is a shortcut for DefaultLogger.Debug.

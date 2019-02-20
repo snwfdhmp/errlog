@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
@@ -106,4 +107,19 @@ func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIn
 	}
 
 	return
+}
+
+//parseRef parses reference line from stack trace to extract filepath and line number
+func parseRef(refLine string) (string, int) {
+	ref := strings.Split(regexpCodeReference.FindString(refLine), ":")
+	if len(ref) != 2 {
+		panic(fmt.Sprintf("len(ref) > 2;ref='%s';", ref))
+	}
+
+	lineNumber, err := strconv.Atoi(ref[1])
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse line number '%s': %s", ref[1], err))
+	}
+
+	return ref[0], lineNumber
 }
