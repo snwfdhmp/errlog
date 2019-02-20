@@ -12,30 +12,19 @@ Use errlog to enhance your error logging with :
 
 ## Get started
 
-1. Install with
+### Install
 
 ```
 go get github.com/snwfdhmp/errlog
 ```
 
-2. Import with
+### Import
 
 ```golang
-import (
-    "github.com/snwfdhmp/errlog"
-)
+import "github.com/snwfdhmp/errlog"
 ```
 
-2. Use with
-
-```golang
-err := someFunc()
-if errlog.Debug(err) {
-	return
-}
-```
-
-## Usage
+### Usage
 
 ```golang
 func someFunc() {
@@ -91,7 +80,7 @@ func someNastyFunction() error {
 }
 ```
 
-Output :
+### Output
 
 ```
 $ go run main.go
