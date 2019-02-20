@@ -64,6 +64,7 @@
 package errlog
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -93,9 +94,23 @@ type Logger interface {
 	Config() *Config
 }
 
+//SetDebugMode sets debug mode to On if toggle==true or Off if toggle==false. It changes log level an so displays more logs about whats happening. Useful for debugging.
+func SetDebugMode(toggle bool) {
+	if toggle {
+		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+	}
+}
+
 type logger struct {
 	config             *Config
 	stackDepthOverload int
+}
+
+//Printf is the function used to log
+func (l *logger) Printf(format string, data ...interface{}) {
+	l.config.PrintFunc(format, data...)
 }
 
 //NewLogger creates a new logger struct with given config
@@ -116,12 +131,13 @@ func (l *logger) Config() *Config {
 
 //Config holds the configuration for a logger
 type Config struct {
-	LinesBefore        int  //How many lines to print *before* the error line when printing source code
-	LinesAfter         int  //How many lines to print *after* the error line when printing source code
-	PrintStack         bool //Shall we print stack trace ? yes/no
-	PrintSource        bool //Shall we print source code along ? yes/no
-	PrintError         bool //Shall we print the error of Debug(err) ? yes/no
-	ExitOnDebugSuccess bool //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
+	PrintFunc          func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
+	LinesBefore        int                                      //How many lines to print *before* the error line when printing source code
+	LinesAfter         int                                      //How many lines to print *after* the error line when printing source code
+	PrintStack         bool                                     //Shall we print stack trace ? yes/no
+	PrintSource        bool                                     //Shall we print source code along ? yes/no
+	PrintError         bool                                     //Shall we print the error of Debug(err) ? yes/no
+	ExitOnDebugSuccess bool                                     //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
 }
 
 var (
@@ -142,9 +158,15 @@ var (
 		return regexp.MustCompile(fmt.Sprintf(`%s[\s\:]*={1}([\s]*[a-zA-Z0-9\._]+)`, varName))
 	}
 
+	//DefaultLoggerPrintFunc is fmt.Printf without return values
+	DefaultLoggerPrintFunc = func(format string, data ...interface{}) {
+		fmt.Printf(format+"\n", data...)
+	}
+
 	//DefaultLogger logger implements default configuration for a logger
 	DefaultLogger = &logger{
 		config: &Config{
+			PrintFunc:          DefaultLoggerPrintFunc,
 			LinesBefore:        4,
 			LinesAfter:         2,
 			PrintStack:         false,
@@ -160,17 +182,35 @@ var (
 	fs = afero.NewOsFs() //fs is at package level because I think it needn't be scoped to loggers
 )
 
+func (l *logger) Doctor() (neededDoctor bool) {
+	neededDoctor = false
+	if l.config.PrintFunc == nil {
+		neededDoctor = true
+		logrus.Debug("PrintFunc not set for this logger. Replacing with DefaultLoggerPrintFunc.")
+		l.config.PrintFunc = DefaultLoggerPrintFunc
+	}
+
+	return
+}
+
 // Debug wraps up Logger debugging funcs related to an error
 // If the given error is nil, it returns immediately
 // It relies on Logger.Config to determine what will be printed or executed
 func (l *logger) Debug(uErr error) bool {
+	if l.Doctor() {
+		logrus.Warn("Doctor() has detected and fixed some problems. It might have modified your configuration. Check logs by enabling debug. 'errlog.SetDebugMode(true)'.")
+	}
 	if uErr == nil {
 		return false
 	}
 	stages := getStackTrace(1 + l.stackDepthOverload)
+	if len(stages) < 1 {
+		l.Debug(errors.New("cannot read stack trace"))
+		return true
+	}
 	l.stackDepthOverload = 0
 	if l.config.PrintError {
-		fmt.Printf("\nError in %s: %s\n", regexpCallArgs.FindString(stages[0]), color.YellowString(uErr.Error()))
+		l.Printf("Error in %s: %s", regexpCallArgs.FindString(stages[0]), color.YellowString(uErr.Error()))
 	}
 
 	if l.config.PrintSource {
@@ -179,8 +219,8 @@ func (l *logger) Debug(uErr error) bool {
 	}
 
 	if l.config.PrintStack {
-		fmt.Println("Stack trace:")
-		printStack(stages)
+		l.Printf("Stack trace:")
+		l.printStack(stages)
 	}
 
 	if l.config.ExitOnDebugSuccess {
@@ -209,6 +249,7 @@ func parseRef(refLine string) (string, int) {
 	return ref[0], lineNumber
 }
 
+// PrintSourceOptions represents config for (*logger).PrintSource func
 type PrintSourceOptions struct {
 	FuncLine    int
 	StartLine   int
@@ -223,9 +264,9 @@ type PrintSourceOptions struct {
 func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 	//print func on first line
 	if opts.FuncLine != -1 && opts.FuncLine < opts.StartLine {
-		fmt.Println(color.RedString("%d: %s", opts.FuncLine+1, lines[opts.FuncLine]))
+		l.Printf("%s", color.RedString("%d: %s", opts.FuncLine+1, lines[opts.FuncLine]))
 		if opts.FuncLine < opts.StartLine-1 { // append blank line if minLine is not next line
-			fmt.Println(color.YellowString("..."))
+			l.Printf("%s", color.YellowString("..."))
 		}
 	}
 
@@ -256,16 +297,16 @@ func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 		}
 
 		if highlightStart == -1 { //simple line
-			fmt.Printf("%d: %s\n", i+opts.StartLine+1, color.YellowString(lines[i]))
+			l.Printf("%d: %s", i+opts.StartLine+1, color.YellowString(lines[i]))
 		} else { // line with highlightings
-			fmt.Printf("%d: %s%s%s\n", i+opts.StartLine+1, color.YellowString(lines[i][:highlightStart]), color.RedString(lines[i][highlightStart:highlightEnd+1]), color.YellowString(lines[i][highlightEnd+1:]))
+			l.Printf("%d: %s%s%s", i+opts.StartLine+1, color.YellowString(lines[i][:highlightStart]), color.RedString(lines[i][highlightStart:highlightEnd+1]), color.YellowString(lines[i][highlightEnd+1:]))
 		}
 	}
 }
 
 //DebugSource prints certain lines of source code of a file for debugging, using (*logger).config as configurations
 func (l *logger) DebugSource(filepath string, debugLineNumber int) {
-	fmt.Printf("line %d of %s:%d\n", debugLineNumber, filepath, debugLineNumber)
+	l.Printf("line %d of %s:%d", debugLineNumber, filepath, debugLineNumber)
 
 	b, err := afero.ReadFile(fs, filepath)
 	if err != nil {
@@ -323,12 +364,12 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 	})
 }
 
-func printStack(stages []string) {
+func (l *logger) printStack(stages []string) {
 	for i := range stages {
 		for j := -1; j < i; j++ {
-			fmt.Printf("  ")
+			l.Printf("  ")
 		}
-		fmt.Printf("%s:%s\n", regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
+		l.Printf("%s:%s\n", regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
 	}
 }
 
@@ -345,12 +386,12 @@ func getStackTrace(deltaDepth int) []string {
 
 //PrintStack prints the current stack trace
 func PrintStack() {
-	printStack(getStackTrace(1))
+	DefaultLogger.printStack(getStackTrace(1))
 }
 
 //PrintStackMinus prints the current stack trace minus the amount of depth in parameter
 func PrintStackMinus(depthToRemove int) {
-	printStack(getStackTrace(1 + depthToRemove))
+	DefaultLogger.printStack(getStackTrace(1 + depthToRemove))
 }
 
 func findFuncLine(lines []string, lineNumber int) int {
@@ -382,9 +423,9 @@ func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIn
 		openedBrackets, closedBrackets := 0, 0
 		for j := index[1]; j < len(lines[i]); j++ {
 			if lines[i][j] == '(' {
-				openedBrackets += 1
+				openedBrackets++
 			} else if lines[i][j] == ')' {
-				closedBrackets += 1
+				closedBrackets--
 			}
 			if openedBrackets == closedBrackets {
 				columnEnd = j
