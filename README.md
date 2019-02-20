@@ -1,19 +1,28 @@
-# A simple object to enhance Go source code debugging
+# A simple package to enhance Go source code debugging
 
 ## Get started
 
-Install via
+1. Install with
 
 ```
 go get github.com/snwfdhmp/errlog
 ```
 
-Import via
+2. Import with
 
 ```golang
 import (
     "github.com/snwfdhmp/errlog"
 )
+```
+
+2. Use with
+
+```golang
+err := someFunc()
+if errlog.Debug(err) {
+	return
+}
 ```
 
 ## Usage
@@ -130,16 +139,7 @@ debug := errlog.NewLogger(&errlog.Config{
 
 Outputs :
 
-```
-Error in main.someBigFunction(): I'm failing for no reason
-line 41 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:41
-33: func someBigFunction() {
-...
-40:     if err := someNastyFunction(); debug.Debug(err) {
-41:             return
-42:     }
-exit status 1
-```
+![Console Output](https://i.ibb.co/yPcq4kJ/output-logrus.jpg)
 
 ## Feedback
 

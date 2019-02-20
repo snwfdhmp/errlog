@@ -299,6 +299,7 @@ func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 		if highlightStart == -1 { //simple line
 			l.Printf("%d: %s", i+opts.StartLine+1, color.YellowString(lines[i]))
 		} else { // line with highlightings
+			logrus.Debugf("Next line should be highlighted from column %d to %d.", highlightStart, highlightEnd)
 			l.Printf("%d: %s%s%s", i+opts.StartLine+1, color.YellowString(lines[i][:highlightStart]), color.RedString(lines[i][highlightStart:highlightEnd+1]), color.YellowString(lines[i][highlightEnd+1:]))
 		}
 	}
@@ -412,9 +413,18 @@ func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIn
 	}
 	varName := reMatches[1]
 	reFindVar := regexpFindVarDefinition(varName)
-	for i := debugLine; i >= funcLine; i-- {
+	for i := debugLine; i >= funcLine && i > 0; i-- {
+		logrus.Debugf("%d: %s", i, lines[i])
+		if strings.Trim(lines[i], " \n\t") == "" {
+			logrus.Debugf(color.BlueString("%d: ignoring blank line", i))
+			continue
+		} else if len(lines[i]) >= 2 && lines[i][:2] == "//" {
+			logrus.Debugf(color.BlueString("%d: ignoring comment line", i))
+			continue
+		}
 		index := reFindVar.FindStringSubmatchIndex(lines[i])
 		if index == nil {
+			logrus.Debugf(color.BlueString("%d: var definition not found for '%s' (regexp no match).", i, varName))
 			continue
 		}
 
@@ -425,13 +435,19 @@ func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIn
 			if lines[i][j] == '(' {
 				openedBrackets++
 			} else if lines[i][j] == ')' {
-				closedBrackets--
+				closedBrackets++
 			}
 			if openedBrackets == closedBrackets {
 				columnEnd = j
 				return
 			}
 		}
+
+		if columnEnd == 0 {
+			logrus.Debugf("Correcting columnEnd [0]. We failed to find err definition.")
+			columnEnd = len(lines[i]) - 1
+		}
+		return
 	}
 
 	return
