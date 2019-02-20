@@ -9,7 +9,7 @@ import (
 
 var (
 	debug = errlog.NewLogger(&errlog.Config{
-		// PrintFunc:          logrus.Errorf,
+		PrintFunc:          logrus.Errorf,
 		LinesBefore:        6,
 		LinesAfter:         3,
 		PrintError:         true,

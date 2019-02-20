@@ -135,9 +135,9 @@ Errlog finds the exact line where the error is defined.
 
 ## Feedback
 
-Feel free to open an issue for any feedback.
+Feel free to open an issue for any feedback or suggestion.
 
-If you report bugs I fix them asap.
+I fix bugs quickly.
 
 ## Contributions
 
