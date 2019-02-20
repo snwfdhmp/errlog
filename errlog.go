@@ -141,13 +141,14 @@ func (l *logger) Config() *Config {
 
 //Config holds the configuration for a logger
 type Config struct {
-	PrintFunc          func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
-	LinesBefore        int                                      //How many lines to print *before* the error line when printing source code
-	LinesAfter         int                                      //How many lines to print *after* the error line when printing source code
-	PrintStack         bool                                     //Shall we print stack trace ? yes/no
-	PrintSource        bool                                     //Shall we print source code along ? yes/no
-	PrintError         bool                                     //Shall we print the error of Debug(err) ? yes/no
-	ExitOnDebugSuccess bool                                     //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
+	PrintFunc               func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
+	LinesBefore             int                                      //How many lines to print *before* the error line when printing source code
+	LinesAfter              int                                      //How many lines to print *after* the error line when printing source code
+	PrintStack              bool                                     //Shall we print stack trace ? yes/no
+	PrintSource             bool                                     //Shall we print source code along ? yes/no
+	PrintError              bool                                     //Shall we print the error of Debug(err) ? yes/no
+	ExitOnDebugSuccess      bool                                     //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
+	DisableStackIndentation bool                                     //Shall we print stack vertically instead of indented
 }
 
 var (
@@ -331,8 +332,11 @@ func (l *logger) PrintSource(lines []string, opts PrintSourceOptions) {
 
 //DebugSource prints certain lines of source code of a file for debugging, using (*logger).config as configurations
 func (l *logger) DebugSource(filepath string, debugLineNumber int) {
-	filepath = strings.Replace(filepath, gopath, "", -1)
-	l.Printf("line %d of %s:%d", debugLineNumber, filepath, debugLineNumber)
+	filepathShort := filepath
+	if gopath != "" {
+		filepathShort = strings.Replace(filepath, gopath+"/src/", "", -1)
+	}
+	l.Printf("line %d of %s:%d", debugLineNumber, filepathShort, debugLineNumber)
 
 	b, err := afero.ReadFile(fs, filepath)
 	if err != nil {
@@ -391,12 +395,14 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 }
 
 func (l *logger) printStack(stages []string) {
-	for i := range stages {
+	for i := len(stages) - 1; i >= 0; i-- {
 		padding := ""
-		for j := -1; j < i; j++ {
-			padding += "  "
+		if !l.config.DisableStackIndentation {
+			for j := 0; j < len(stages)-1-i; j++ {
+				padding += "  "
+			}
 		}
-		l.Printf("%s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
+		l.Printf("  %s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
 	}
 }
 
