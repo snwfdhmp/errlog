@@ -37,7 +37,7 @@ func someFunc() {
 
 ## Example
 
-We are going to use this sample program :
+We will use this sample program :
 
 ```golang
 package main
