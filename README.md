@@ -82,29 +82,7 @@ func someNastyFunction() error {
 
 ### Output
 
-```
-$ go run main.go
-Start of the program
-I do things !
-
-error in main.someBigFunction: I'm failing for no reason
-line 26 of /Users/snwfdhmp/go/src/github.com/snwfdhmp/sandbox/testerr.go:26
-22: func someBigFunction() {
-23: 	someSmallFunction()
-24: 
-25: 	if err := someNastyFunction(); errlog.Debug(err) {
-26: 		return
-27: 	}
-28: 
-29: 	someSmallFunction()
-30: }
-31: 
-Stack trace:
-  main.someBigFunction():26
-    main.wrapingFunc():19
-      main.main():13
-exit status 1
-```
+![Console Output examples/basic.go](https://i.imgur.com/tOkDgwP.png)
 
 ## Configure like you need
 
@@ -124,6 +102,10 @@ type Config struct {
 
 ### Example
 
+> In this example, logrus is used, but any other logger can be used. PrintFunc is of type `func (format string, data ...interface{})`, so you can easily implement your own logger func. Beware that you should add '\n' at the end of format string when printing.
+
+Now using a custom configuration.
+
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
 	PrintFunc:          logrus.Printf,
@@ -138,7 +120,7 @@ debug := errlog.NewLogger(&errlog.Config{
 
 ### Output
 
-![Console Output](https://i.imgur.com/4aV67Tn.jpg)
+![Console Output examples/custom.go](https://i.imgur.com/vh2iEnS.png)
 
 ## Feedback
 
