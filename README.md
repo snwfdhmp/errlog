@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog)
+
 # A simple package to enhance Go source code debugging
 
 ![Example](https://i.imgur.com/Ulf1RGw.png)
@@ -145,3 +147,7 @@ I fix process issues quickly.
 
 PR are accepted as soon as they follow Golang common standards.
 For more information: https://golang.org/doc/effective_go.html
+
+## License GNU GPLv3
+
+Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
