@@ -127,7 +127,7 @@ Example :
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
-	PrintFunc: 					logrus.Printf,
+	PrintFunc:					logrus.Printf,
 	LinesBefore:        2,
 	LinesAfter:         1,
 	PrintError:         true,
