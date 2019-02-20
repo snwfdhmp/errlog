@@ -125,7 +125,7 @@ debug := errlog.NewLogger(&errlog.Config{
 ![Console Output examples/custom.go](https://i.imgur.com/vh2iEnS.png)
 
 
-## Another Example
+### Another Example
 
 Errlog also finds the exact line where the error is defined.
 
