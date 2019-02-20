@@ -367,10 +367,11 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 
 func (l *logger) printStack(stages []string) {
 	for i := range stages {
+		padding := ""
 		for j := -1; j < i; j++ {
-			l.Printf("  ")
+			padding += "  "
 		}
-		l.Printf("%s:%s\n", regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
+		l.Printf("%s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
 	}
 }
 
