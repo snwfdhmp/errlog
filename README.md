@@ -1,5 +1,7 @@
 # A simple package to enhance Go source code debugging
 
+![Example](https://i.imgur.com/wPBrYqs.png)
+
 ## Introduction
 
 Use errlog to enhance your error logging with :
