@@ -139,7 +139,7 @@ debug := errlog.NewLogger(&errlog.Config{
 
 Outputs :
 
-![Console Output](https://i.ibb.co/yPcq4kJ/output-logrus.jpg)
+![Console Output](https://i.imgur.com/4aV67Tn.jpg)
 
 ## Feedback
 
