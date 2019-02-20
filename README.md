@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog)
+
 # A simple package to enhance Go source code debugging
 
 ![Example](https://i.imgur.com/Ulf1RGw.png)
