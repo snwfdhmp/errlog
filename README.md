@@ -104,12 +104,13 @@ You can configure your own logger with these options :
 
 ```golang
 type Config struct {
-	LinesBefore        int
-	LinesAfter         int
-	PrintStack         bool
-	PrintSource        bool
-	PrintError         bool
-	ExitOnDebugSuccess bool
+	PrintFunc          func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
+	LinesBefore        int  					//How many lines to print *before* the error line when printing source code
+	LinesAfter         int 						//How many lines to print *after* the error line when printing source code
+	PrintStack         bool 					//Shall we print stack trace ? yes/no
+	PrintSource        bool 					//Shall we print source code along ? yes/no
+	PrintError         bool 					//Shall we print the error of Debug(err) ? yes/no
+	ExitOnDebugSuccess bool 					//Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
 }
 ```
 
@@ -117,6 +118,7 @@ Example :
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
+	PrintFunc: 					logrus.Printf,
 	LinesBefore:        2,
 	LinesAfter:         1,
 	PrintError:         true,
