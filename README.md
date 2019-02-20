@@ -124,6 +124,7 @@ debug := errlog.NewLogger(&errlog.Config{
 	PrintStack:         false,
 	ExitOnDebugSuccess: true,
 })
+````
 
 Outputs :
 
