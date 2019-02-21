@@ -150,4 +150,4 @@ For more information: https://golang.org/doc/effective_go.html
 
 ## License information
 
-[![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=2592000)](https://github.com/snwfdhmp/errlog/LICENSE)
+[![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=60000)](https://github.com/snwfdhmp/errlog/LICENSE)
