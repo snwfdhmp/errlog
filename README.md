@@ -135,7 +135,7 @@ Errlog finds the exact line where the error is defined.
 
 ## Documentation
 
-Documentation can be found [here on godoc.org](https://github.com/snwfdhmp/errlog).
+Documentation can be found here : [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog)
 
 ## Feedback
 
@@ -148,6 +148,6 @@ I fix process issues quickly.
 PR are accepted as soon as they follow Golang common standards.
 For more information: https://golang.org/doc/effective_go.html
 
-## License GNU GPLv3
+## License information
 
-Permissions of this strong copyleft license are conditioned on making available complete source code of licensed works and modifications, which include larger works using a licensed work, under the same license. Copyright and license notices must be preserved. Contributors provide an express grant of patent rights.
+[![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=2592000)](https://github.com/snwfdhmp/errlog/LICENSE)
