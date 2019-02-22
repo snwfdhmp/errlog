@@ -18,10 +18,8 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack                 = regexp.MustCompile(`((((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)])[\s]+[/a-zA-Z0-9\.]+[:][0-9]+)`)
-	regexpCodeReference              = regexp.MustCompile(`[/a-zA-Z0-9\.]+[:][0-9]+`)
-	regexpCallArgs                   = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+[(](.*)[)]`)
-	regexpCallingObject              = regexp.MustCompile(`((([a-zA-Z._-]+)[/])*)(([(*a-zA-Z0-9)])*(\.))+[a-zA-Z0-9]+`)
+	regexpParseStack2                = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9]*\.)+[a-zA-Z0-9]+)\(((?:0x[0-9a-f]+[,\s]*)+)*\)[\s]+([/a-zA-Z0-9\.]+)[:]([0-9]+)[\s]\+0x([0-9a-f]+)`)
+	regexpHexNumber                  = regexp.MustCompile(`0x[0-9a-f]+`)
 	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
 	regexpParseDebugLineParseVarName = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
@@ -30,9 +28,39 @@ var (
 	}
 )
 
-//getStackTrace parses stack trace from runtime/debug.Stack() and returns it (minus 2 depths for (i) runtime/debug.Stack (ii) itself)
-func getStackTrace(deltaDepth int) []string {
-	return regexpParseStack.FindAllString(string(debug.Stack()), -1)[2+deltaDepth:]
+type StackTraceItem struct {
+	CallingObject string
+	Args          []string
+	SourcePathRef string
+	SourceLineRef int
+	MysteryNumber int64
+}
+
+func parseStackTrace(deltaDepth int) []StackTraceItem {
+	stack := strings.Join(strings.Split(string(debug.Stack()), "\n")[2*(2+deltaDepth):], "\n") //get stack trace and reduce to desired sire
+	parsedRes := regexpParseStack2.FindAllStringSubmatch(stack, -1)
+
+	sti := make([]StackTraceItem, len(parsedRes))
+	for i := range parsedRes {
+		args := regexpHexNumber.FindAllString(parsedRes[i][2], -1)
+		srcLine, err := strconv.Atoi(parsedRes[i][4])
+		if Debug(err) {
+			srcLine = -1
+		}
+		mysteryNumber, err := strconv.ParseInt(parsedRes[i][5], 16, 32)
+		if Debug(err) {
+			mysteryNumber = -1
+		}
+		sti[i] = StackTraceItem{
+			CallingObject: parsedRes[i][1],
+			Args:          args,
+			SourcePathRef: parsedRes[i][3],
+			SourceLineRef: srcLine,
+			MysteryNumber: mysteryNumber,
+		}
+	}
+
+	return sti
 }
 
 //findFuncLine finds line where func is declared
@@ -107,19 +135,4 @@ func findFailingLine(lines []string, funcLine int, debugLine int) (failingLineIn
 	}
 
 	return
-}
-
-//parseRef parses reference line from stack trace to extract filepath and line number
-func parseRef(refLine string) (string, int) {
-	ref := strings.Split(regexpCodeReference.FindString(refLine), ":")
-	if len(ref) != 2 {
-		panic(fmt.Sprintf("len(ref) > 2;ref='%s';", ref))
-	}
-
-	lineNumber, err := strconv.Atoi(ref[1])
-	if err != nil {
-		panic(fmt.Sprintf("cannot parse line number '%s': %s", ref[1], err))
-	}
-
-	return ref[0], lineNumber
 }

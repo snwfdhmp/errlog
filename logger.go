@@ -1,7 +1,6 @@
 package errlog
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -79,24 +78,19 @@ func (l *logger) Debug(uErr error) bool {
 		return false
 	}
 
-	stages := getStackTrace(1 + l.stackDepthOverload)
-	if len(stages) < 1 {
-		l.Debug(errors.New("cannot read stack trace"))
-		return true
-	}
+	stLines := parseStackTrace(1 + l.stackDepthOverload)
 
 	if l.config.PrintError {
-		l.Printf("Error in %s: %s", regexpCallArgs.FindString(stages[0]), color.YellowString(uErr.Error()))
+		l.Printf("Error in %s: %s", stLines[0].CallingObject, color.YellowString(uErr.Error()))
 	}
 
 	if l.config.PrintSource {
-		filepath, lineNumber := parseRef(stages[0])
-		l.DebugSource(filepath, lineNumber)
+		l.DebugSource(stLines[0].SourcePathRef, stLines[0].SourceLineRef)
 	}
 
 	if l.config.PrintStack {
 		l.Printf("Stack trace:")
-		l.printStack(stages)
+		l.printStack(stLines)
 	}
 
 	if l.config.ExitOnDebugSuccess {
@@ -205,15 +199,15 @@ func (l *logger) Doctor() (neededDoctor bool) {
 	return
 }
 
-func (l *logger) printStack(stages []string) {
-	for i := len(stages) - 1; i >= 0; i-- {
+func (l *logger) printStack(stLines []StackTraceItem) {
+	for i := len(stLines) - 1; i >= 0; i-- {
 		padding := ""
 		if !l.config.DisableStackIndentation {
-			for j := 0; j < len(stages)-1-i; j++ {
+			for j := 0; j < len(stLines)-1-i; j++ {
 				padding += "  "
 			}
 		}
-		l.Printf("  %s%s:%s", padding, regexpCallArgs.FindString(stages[i]), strings.Split(regexpCodeReference.FindString(stages[i]), ":")[1])
+		l.Printf("%s (%s:%s)", stLines[i].CallingObject, stLines[i].SourcePathRef, stLines[i].SourceLineRef)
 	}
 }
 

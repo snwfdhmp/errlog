@@ -89,12 +89,17 @@ func Debug(uErr error) bool {
 	return DefaultLogger.Debug(uErr)
 }
 
-//PrintStack prints the current stack trace
+//PrintStack pretty prints the current stack trace
 func PrintStack() {
-	DefaultLogger.printStack(getStackTrace(1))
+	DefaultLogger.printStack(parseStackTrace(1))
+}
+
+//PrintRawStack prints the current stack trace unparsed
+func PrintRawStack() {
+	DefaultLogger.Printf("%#v", parseStackTrace(1))
 }
 
 //PrintStackMinus prints the current stack trace minus the amount of depth in parameter
 func PrintStackMinus(depthToRemove int) {
-	DefaultLogger.printStack(getStackTrace(1 + depthToRemove))
+	DefaultLogger.printStack(parseStackTrace(1 + depthToRemove))
 }
