@@ -18,7 +18,7 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack2                = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9]*\.)+[a-zA-Z0-9]+)\(((?:0x[0-9a-f]+[,\s]*)+)*\)[\s]+([/a-zA-Z0-9\.]+)[:]([0-9]+)[\s]\+0x([0-9a-f]+)`)
+	regexpParseStack                 = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9]*\.)+[a-zA-Z0-9]+)\(((?:0x[0-9a-f]+[,\s]*)+)*\)[\s]+([/a-zA-Z0-9\.]+)[:]([0-9]+)[\s]\+0x([0-9a-f]+)`)
 	regexpHexNumber                  = regexp.MustCompile(`0x[0-9a-f]+`)
 	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
@@ -38,7 +38,7 @@ type StackTraceItem struct {
 
 func parseStackTrace(deltaDepth int) []StackTraceItem {
 	stack := strings.Join(strings.Split(string(debug.Stack()), "\n")[2*(2+deltaDepth):], "\n") //get stack trace and reduce to desired sire
-	parsedRes := regexpParseStack2.FindAllStringSubmatch(stack, -1)
+	parsedRes := regexpParseStack.FindAllStringSubmatch(stack, -1)
 
 	sti := make([]StackTraceItem, len(parsedRes))
 	for i := range parsedRes {
