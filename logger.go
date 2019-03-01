@@ -1,7 +1,6 @@
 package errlog
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -109,8 +108,9 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 
 	b, err := afero.ReadFile(fs, filepath)
 	if err != nil {
-		err = fmt.Errorf("cannot read file '%s': %s;", filepath, err)
-		l.Debug(err)
+		l.Printf("errlog: cannot read file '%s': %s. If sources are not reachable in this environment, you should set PrintSource=false in logger config.", filepath, err)
+		return
+		// l.Debug(err)
 	}
 	lines := strings.Split(string(b), "\n")
 
