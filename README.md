@@ -51,7 +51,7 @@ type Config struct {
     PrintStack         bool //Shall we print stack trace ? yes/no
     PrintSource        bool //Shall we print source code along ? yes/no
     PrintError         bool //Shall we print the error of Debug(err) ? yes/no
-    ExitOnDebugSuccess bool //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
+    ExitOnDebugSuccess bool //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil). Will soon be replaced by ExitFunc to enable panic-ing the current goroutine. (if you need this quick, please open an issue)
 }
 ```
 
@@ -107,21 +107,25 @@ func wrappingFunc() {
 
 ### Example
 
-> In this example, logrus is used, but any other logger can be used. PrintFunc is of type `func (format string, data ...interface{})`, so you can easily implement your own logger func. Beware that you should add '\n' at the end of format string when printing.
-
-Now using a custom configuration.
+Now let's see what we can do with a custom configuration.
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
+    // PrintFunc is of type `func (format string, data ...interface{})`
+    // so you can easily implement your own logger func.
+    // In this example, logrus is used, but any other logger can be used.
+    // Beware that you should add '\n' at the end of format string when printing.
     PrintFunc:          logrus.Printf,
-    LinesBefore:        2,
-    LinesAfter:         1,
-    PrintError:         true,
-    PrintSource:        true,
-    PrintStack:         false,
-    ExitOnDebugSuccess: true,
+    PrintSource:        true, //Print the failing source code
+    LinesBefore:        2, //Print 2 lines before failing line
+    LinesAfter:         1, //Print 1 line after failing line
+    PrintError:         true, //Print the error
+    PrintStack:         false, //Don't print the stack trace
+    ExitOnDebugSuccess: true, //Exit if err
 })
 ```
+
+> This definition may be outdated, visit the [Config struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
 
 ### Output
 
