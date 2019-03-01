@@ -16,7 +16,7 @@ Use errlog to enhance your error logging with :
 
 ### Install
 
-```
+```shell
 go get github.com/snwfdhmp/errlog
 ```
 
@@ -28,6 +28,8 @@ import "github.com/snwfdhmp/errlog"
 
 ### Usage
 
+Now, replace some `if err != nil` with `if errlog.Debug(err)` to add debugging informations.
+
 ```golang
 func someFunc() {
     //...
@@ -37,6 +39,25 @@ func someFunc() {
 }
 ```
 
+## Configure like you need
+
+You can configure your own logger with these options :
+
+```golang
+type Config struct {
+    PrintFunc          func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
+    LinesBefore        int  //How many lines to print *before* the error line when printing source code
+    LinesAfter         int  //How many lines to print *after* the error line when printing source code
+    PrintStack         bool //Shall we print stack trace ? yes/no
+    PrintSource        bool //Shall we print source code along ? yes/no
+    PrintError         bool //Shall we print the error of Debug(err) ? yes/no
+    ExitOnDebugSuccess bool //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
+}
+```
+
+> This definition may be outdated, visit the [Config struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
+
+
 ## Example
 
 We will use this sample program :
@@ -45,62 +66,44 @@ We will use this sample program :
 package main
 
 import (
-	"errors"
-	"fmt"
+    "errors"
+    "fmt"
 
-	"github.com/snwfdhmp/errlog"
+    "github.com/snwfdhmp/errlog"
 )
 
+func someSmallFunc() {
+    fmt.Println("I do things !")
+}
+
+func someBigFunc() {
+    someSmallFunc()
+
+    if err := someNastyFunc(); errlog.Debug(err) {
+        return
+    }
+
+    someSmallFunc()
+}
+
+func someNastyFunc() error {
+    return errors.New("I'm failing for no reason")
+}
+
 func main() {
-	fmt.Println("Start of the program")
-
-	wrapingFunc()
-
-	fmt.Println("End of the program")
+    fmt.Println("Start of the program")
+    wrappingFunc()
+    fmt.Println("End of the program")
 }
 
-func wrapingFunc() {
-	someBigFunction()
-}
-
-func someBigFunction() {
-	someSmallFunction()
-
-	if err := someNastyFunction(); errlog.Debug(err) {
-		return
-	}
-
-	someSmallFunction()
-}
-
-func someSmallFunction() {
-	fmt.Println("I do things !")
-}
-
-func someNastyFunction() error {
-	return errors.New("I'm failing for no reason")
+func wrappingFunc() {
+    someBigFunc()
 }
 ```
 
 ### Output
 
 ![Console Output examples/basic.go](https://i.imgur.com/tOkDgwP.png)
-
-## Configure like you need
-
-You can configure your own logger with these options :
-
-```golang
-type Config struct {
-	PrintFunc          func(format string, data ...interface{}) //Printer func (eg: fmt.Printf)
-	LinesBefore        int  					//How many lines to print *before* the error line when printing source code
-	LinesAfter         int 						//How many lines to print *after* the error line when printing source code
-	PrintStack         bool 					//Shall we print stack trace ? yes/no
-	PrintSource        bool 					//Shall we print source code along ? yes/no
-	PrintError         bool 					//Shall we print the error of Debug(err) ? yes/no
-	ExitOnDebugSuccess bool 					//Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
-}
-```
 
 ### Example
 
@@ -110,13 +113,13 @@ Now using a custom configuration.
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
-	PrintFunc:          logrus.Printf,
-	LinesBefore:        2,
-	LinesAfter:         1,
-	PrintError:         true,
-	PrintSource:        true,
-	PrintStack:         false,
-	ExitOnDebugSuccess: true,
+    PrintFunc:          logrus.Printf,
+    LinesBefore:        2,
+    LinesAfter:         1,
+    PrintError:         true,
+    PrintSource:        true,
+    PrintStack:         false,
+    ExitOnDebugSuccess: true,
 })
 ```
 
