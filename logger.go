@@ -207,7 +207,7 @@ func (l *logger) printStack(stLines []StackTraceItem) {
 				padding += "  "
 			}
 		}
-		l.Printf("%s (%s:%s)", stLines[i].CallingObject, stLines[i].SourcePathRef, stLines[i].SourceLineRef)
+		l.Printf("%s (%s:%d)", stLines[i].CallingObject, stLines[i].SourcePathRef, stLines[i].SourceLineRef)
 	}
 }
 
