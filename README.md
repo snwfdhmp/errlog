@@ -63,29 +63,23 @@ type Config struct {
 We will use this sample program :
 
 ```golang
-package main
-
-import (
-    "errors"
-    "fmt"
-
-    "github.com/snwfdhmp/errlog"
-)
-
+//someSmallFunc represents any func
 func someSmallFunc() {
     fmt.Println("I do things !")
 }
 
+//someBigFunc represents any func having to handle errors from other funcs
 func someBigFunc() {
     someSmallFunc()
 
-    if err := someNastyFunc(); errlog.Debug(err) {
+    if err := someNastyFunc(); errlog.Debug(err) { //here, he want to catch an error
         return
     }
 
     someSmallFunc()
 }
 
+//someNastyFunc represents any failing func
 func someNastyFunc() error {
     return errors.New("I'm failing for no reason")
 }
