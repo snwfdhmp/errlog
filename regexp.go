@@ -18,7 +18,7 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack                 = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9]*\.)+[a-zA-Z0-9]+)\(((?:0x[0-9a-f]+[,\s]*)+)*\)[\s]+([/a-zA-Z0-9\.]+)[:]([0-9]+)[\s]\+0x([0-9a-f]+)`)
+	regexpParseStack                 = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9_]*\.)+[a-zA-Z0-9_]+)\(((?:(?:0x[0-9a-f]+)|(?:...)[,\s]*)+)*\)[\s]+([/\-a-zA-Z0-9\.]+)[:]([0-9]+)[\s](?:\+0x([0-9a-f]+))*`)
 	regexpHexNumber                  = regexp.MustCompile(`0x[0-9a-f]+`)
 	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
