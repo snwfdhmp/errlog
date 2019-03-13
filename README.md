@@ -152,3 +152,15 @@ For more information: https://golang.org/doc/effective_go.html
 ## License information
 
 [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=60000)](https://github.com/snwfdhmp/errlog/LICENSE)
+
+## Contributors
+
+### Project contribution
+
+- [snwfdhmp](https://github.com/snwfdhmp): Original author
+- [chemidy](https://github.com/chemidy): Add badges
+
+### Minor fixes
+
+- [orisano](https://github.com/orisano)
+- [programmingman](https://github.com/programmingman)
