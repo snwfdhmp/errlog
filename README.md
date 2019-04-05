@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog) [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog) [![GitHub issues](https://img.shields.io/github/issues/snwfdhmp/errlog.svg)](https://github.com/snwfdhmp/errlog/issues) [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=6000)](https://github.com/snwfdhmp/errlog/LICENSE) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog) [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog) [![GitHub issues](https://img.shields.io/github/issues/snwfdhmp/errlog.svg)](https://github.com/snwfdhmp/errlog/issues) [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=6000)](https://github.com/snwfdhmp/errlog/LICENSE)
 
 # A simple package to enhance Go source code debugging
 
