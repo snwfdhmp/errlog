@@ -28,6 +28,7 @@ var (
 	}
 )
 
+// StackTraceItem represents parsed information of a stack trace item
 type StackTraceItem struct {
 	CallingObject string
 	Args          []string
