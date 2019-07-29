@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	fmt.Println("Start of the program")
+	fmt.Println("Example start")
 
 	wrapingFunc()
 
-	fmt.Println("End of the program")
+	fmt.Println("Example end")
 }
 
 func wrapingFunc() {
@@ -36,11 +36,11 @@ func someBigFunction() {
 }
 
 func someSmallFunction() {
-	fmt.Println("I do things !")
+	_ = fmt.Sprintf("I do things !")
 }
 
 func someNastyFunction() error {
-	return errors.New("I'm failing for no reason")
+	return errors.New("I'm failing for some reason")
 }
 
 func someDumbFunction() bool {
