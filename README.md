@@ -85,20 +85,12 @@ import (
     "github.com/snwfdhmp/errlog"
 )
 
-func init() {
-    errlog.DefaultLogger.Disable(true)
-}
-
 func main() {
     fmt.Println("Example start")
 
     wrapingFunc()
 
     fmt.Println("Example end")
-}
-
-func wrapingFunc() {
-    someBigFunction()
 }
 
 func someBigFunction() {
@@ -117,6 +109,10 @@ func someBigFunction() {
     someDumbFunction()
 }
 
+func wrapingFunc() {
+    someBigFunction()
+}
+
 func someSmallFunction() {
     _ = fmt.Sprintf("I do things !")
 }
@@ -128,7 +124,6 @@ func someNastyFunction() error {
 func someDumbFunction() bool {
     return false
 }
-
 ```
 
 
