@@ -7,6 +7,10 @@ import (
 	"github.com/snwfdhmp/errlog"
 )
 
+func init() {
+	errlog.DefaultLogger.Disable(true)
+}
+
 func main() {
 	fmt.Println("Example start")
 
