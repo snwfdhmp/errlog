@@ -28,6 +28,9 @@ type Logger interface {
 	SetConfig(cfg *Config)
 	//Config returns current config
 	Config() *Config
+	//Disable is used to disable Logger (every call to this Logger will perform NO-OP (no operation)) and return instantly
+	//Use Disable(true) to disable and Disable(false) to enable again
+	Disable(bool)
 }
 
 //Config holds the configuration for a logger
@@ -40,6 +43,7 @@ type Config struct {
 	PrintError              bool                                     //Shall we print the error of Debug(err) ? yes/no
 	ExitOnDebugSuccess      bool                                     //Shall we os.Exit(1) after Debug has finished logging everything ? (doesn't happen when err is nil)
 	DisableStackIndentation bool                                     //Shall we print stack vertically instead of indented
+	Mode                    int
 }
 
 // PrintSourceOptions represents config for (*logger).PrintSource func
@@ -72,6 +76,9 @@ func NewLogger(cfg *Config) Logger {
 // If the given error is nil, it returns immediately
 // It relies on Logger.Config to determine what will be printed or executed
 func (l *logger) Debug(uErr error) bool {
+	if l.config.Mode == ModeDisabled {
+		return uErr != nil
+	}
 	l.Doctor()
 	if uErr == nil {
 		return false
@@ -234,3 +241,30 @@ func (l *logger) SetConfig(cfg *Config) {
 func (l *logger) Config() *Config {
 	return l.config
 }
+
+func (l *logger) SetMode(mode int) bool {
+	if !isIntInSlice(mode, enabledModes) {
+		return false
+	}
+	l.Config().Mode = mode
+	return true
+}
+
+func (l *logger) Disable(shouldDisable bool) {
+	if shouldDisable {
+		l.Config().Mode = ModeDisabled
+	} else {
+		l.Config().Mode = ModeEnabled
+	}
+}
+
+const (
+	// ModeDisabled represents the disabled mode (NO-OP)
+	ModeDisabled = iota + 1
+	// ModeEnabled represents the enabled mode (Print)
+	ModeEnabled
+)
+
+var (
+	enabledModes = []int{ModeDisabled, ModeEnabled}
+)
