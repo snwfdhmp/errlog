@@ -187,19 +187,25 @@ I fix process issues quickly.
 
 ## Contributions
 
-PR are accepted as soon as they follow Golang common standards.
-For more information: https://golang.org/doc/effective_go.html
+We are happy to collaborate with you :
+
+- Ask for a new feature: [Open an issue](https://github.com/snwfdhmp/errlog/issues/new)
+- Add your feature: [Open a PR](https://github.com/snwfdhmp/errlog/compare)
+
+When submitting a PR, please apply Effective Go best practices. For more information: https://golang.org/doc/effective_go.html
 
 ## License information
+
+Click the following badge to open LICENSE information.
 
 [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=60000)](https://github.com/snwfdhmp/errlog/LICENSE)
 
 ## Contributors
 
-### Project contribution
+### Major
 
-- [snwfdhmp](https://github.com/snwfdhmp): Original author
-- [chemidy](https://github.com/chemidy): Add badges
+- [snwfdhmp](https://github.com/snwfdhmp): Author and maintainer
+- [chemidy](https://github.com/chemidy): Added important badges
 
 ### Minor fixes
 
