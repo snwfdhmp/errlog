@@ -1,6 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog) [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog) [![GitHub issues](https://img.shields.io/github/issues/snwfdhmp/errlog.svg)](https://github.com/snwfdhmp/errlog/issues) [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=6000)](https://github.com/snwfdhmp/errlog/LICENSE) [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome)
-
-# A simple package to enhance Go source code debugging
+# Errlog: reduce debugging time while programming [![Go Report Card](https://goreportcard.com/badge/github.com/snwfdhmp/errlog)](https://goreportcard.com/report/github.com/snwfdhmp/errlog) [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome) [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog) [![GitHub issues](https://img.shields.io/github/issues/snwfdhmp/errlog.svg)](https://github.com/snwfdhmp/errlog/issues) [![license](https://img.shields.io/github/license/snwfdhmp/errlog.svg?maxAge=6000)](https://github.com/snwfdhmp/errlog/LICENSE)
 
 ![Example](https://i.imgur.com/Ulf1RGw.png)
 
