@@ -4,11 +4,15 @@
 
 ## Introduction
 
-Use errlog to enhance your error logging with :
+Use errlog to improve error logging and speed up your debugging while programming :
 
-- Code source highlight
-- Failing func recognition
-- Readable stack trace
+- Highlight source code
+- Detect and point out which func call is causing the fail
+- Pretty stack trace
+- No-op mode for production
+- Easy implementation, adaptable logger
+- Plug to any existing project without changing your/your teammates habits
+- Plug to your existing logging system
 
 ## Get started
 
@@ -18,15 +22,9 @@ Use errlog to enhance your error logging with :
 go get github.com/snwfdhmp/errlog
 ```
 
-### Import
-
-```golang
-import "github.com/snwfdhmp/errlog"
-```
-
 ### Usage
 
-Now, replace some `if err != nil` with `if errlog.Debug(err)` to add debugging informations.
+Replace your `if err != nil` with `if errlog.Debug(err)` to add debugging informations.
 
 ```golang
 func someFunc() {
@@ -37,9 +35,11 @@ func someFunc() {
 }
 ```
 
-## Configure like you need
+In production, call `errlog.Disable(true)` to enable no-op (equivalent to `if err != nil`)
 
-You can configure your own logger with these options :
+## Tweak as you need
+
+You can configure your own logger with the following options :
 
 ```golang
 type Config struct {
@@ -53,51 +53,93 @@ type Config struct {
 }
 ```
 
-> This definition may be outdated, visit the [Config struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
+> As we don't yet update automatically this README immediately when we add new features, this definition may be outdated. (Last update: 2019/08/07)
+> [See the struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
 
 
 ## Example
 
-We will use this sample program :
+### Try yourself
+
+| Name and link | Description |
+| --- | --- |
+| [Basic](examples/basic/basic.go) | standard usage, quick setup
+| [Custom](examples/custom/custom.go) | guided configuration for fulfilling your needs |
+| [Disabled](examples/disabled/disabled.go) | how to disable the logging & debugging (eg: for production use) |
+| [Failing line far away](examples/failingLineFar/failingLineFar.go) | example of finding the func call that caused the error while it is lines away from the errlog.Debug call |
+| [Pretty stack trace](examples/stackTrace/stackTrace.go) | pretty stack trace printing instead of debugging. |
+
+### Just read
+
+#### Basic example
+
+We're going to use this sample program :
 
 ```golang
-//someSmallFunc represents any func
-func someSmallFunc() {
-    fmt.Println("I do things !")
-}
+package main
 
-//someBigFunc represents any func having to handle errors from other funcs
-func someBigFunc() {
-    someSmallFunc()
+import (
+    "errors"
+    "fmt"
 
-    if err := someNastyFunc(); errlog.Debug(err) { //here, he want to catch an error
-        return
-    }
+    "github.com/snwfdhmp/errlog"
+)
 
-    someSmallFunc()
-}
-
-//someNastyFunc represents any failing func
-func someNastyFunc() error {
-    return errors.New("I'm failing for no reason")
+func init() {
+    errlog.DefaultLogger.Disable(true)
 }
 
 func main() {
-    fmt.Println("Start of the program")
-    wrappingFunc()
-    fmt.Println("End of the program")
+    fmt.Println("Example start")
+
+    wrapingFunc()
+
+    fmt.Println("Example end")
 }
 
-func wrappingFunc() {
-    someBigFunc()
+func wrapingFunc() {
+    someBigFunction()
 }
+
+func someBigFunction() {
+    someDumbFunction()
+
+    someSmallFunction()
+
+    someDumbFunction()
+
+    if err := someNastyFunction(); errlog.Debug(err) {
+        return
+    }
+
+    someSmallFunction()
+
+    someDumbFunction()
+}
+
+func someSmallFunction() {
+    _ = fmt.Sprintf("I do things !")
+}
+
+func someNastyFunction() error {
+    return errors.New("I'm failing for some reason")
+}
+
+func someDumbFunction() bool {
+    return false
+}
+
 ```
 
-### Output
+
+#### Output
 
 ![Console Output examples/basic.go](https://i.imgur.com/tOkDgwP.png)
 
-### Example
+
+We are able to detect and point out which line is causing the error.
+
+### Custom Configuration Example
 
 Now let's see what we can do with a custom configuration.
 
@@ -117,14 +159,15 @@ debug := errlog.NewLogger(&errlog.Config{
 })
 ```
 
-> This definition may be outdated, visit the [Config struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
+> As we don't yet update automatically this README immediately when we add new features, this definition may be outdated. (Last update: 2019/08/07)
+> [See the struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
 
-### Output
+#### Output
 
 ![Console Output examples/custom.go](https://i.imgur.com/vh2iEnS.png)
 
 
-### Another Example
+### Example
 
 Errlog finds the exact line where the error is defined.
 
