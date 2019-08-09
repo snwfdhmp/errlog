@@ -141,7 +141,7 @@ We are able to detect and point out which line is causing the error.
 
 ### Custom Configuration Example
 
-Now let's see what we can do with a custom configuration.
+Let's see what we can do with a custom configuration.
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
@@ -159,7 +159,7 @@ debug := errlog.NewLogger(&errlog.Config{
 })
 ```
 
-> As we don't yet update automatically this README immediately when we add new features, this definition may be outdated. (Last update: 2019/08/07)
+> Please note: This definition may be outdated. (Last update: 2019/08/07)
 > [See the struct definition in godoc.org](https://godoc.org/github.com/snwfdhmp/errlog#Config) for the up to date definition
 
 #### Output
@@ -167,11 +167,11 @@ debug := errlog.NewLogger(&errlog.Config{
 ![Console Output examples/custom.go](https://i.imgur.com/vh2iEnS.png)
 
 
-### Example
+### When the failing func call is a few lines away
 
 Errlog finds the exact line where the error is defined.
 
-### Output
+#### Output
 
 ![Source Example: error earlier in the code](https://i.imgur.com/wPBrYqs.png)
 
