@@ -4,15 +4,26 @@
 
 ## Introduction
 
-Use errlog to improve error logging and speed up your debugging while programming :
+Use errlog to improve error logging and **speed up  debugging while you create amazing code** :
 
 - Highlight source code
-- Detect and point out which func call is causing the fail
+- **Detect and point out** which func call is causing the fail
 - Pretty stack trace
-- No-op mode for production
+- **No-op mode** for production
 - Easy implementation, adaptable logger
-- Plug to any existing project without changing your/your teammates habits
-- Plug to your existing logging system
+- Plug to any current project without changing you or your teammates habits
+- Plug to **your current logging system**
+
+|Go to|
+|---|
+|[Get started](#get-started)|
+|[Documentation](#documentation)|
+|[Examples](#example)|
+|[Tweaking](#tweak-as-you-need)|
+|[Feedbacks](#feedbacks)|
+|[Contributions](#contributions)|
+|[License](#license-information)|
+|[Contributors](#contributors)|
 
 ## Get started
 
@@ -73,44 +84,35 @@ type Config struct {
 
 #### Basic example
 
+> Note that in the example, you will see some unuseful func. Those are made to generate additional stack trace levels for the sake of example
+
 We're going to use this sample program :
 
 ```golang
-package main
-
-import (
-    "errors"
-    "fmt"
-
-    "github.com/snwfdhmp/errlog"
-)
-
 func main() {
-    fmt.Println("Example start")
+    fmt.Println("Program start")
 
-    wrapingFunc()
+    wrapingFunc() //call to our important function
 
-    fmt.Println("Example end")
+    fmt.Println("Program end")
+}
+
+func wrapingFunc() {
+    someBigFunction() // call some func 
 }
 
 func someBigFunction() {
-    someDumbFunction()
+    someDumbFunction() // just random calls
+    someSmallFunction() // just random calls
+    someDumbFunction() // just random calls
 
-    someSmallFunction()
-
-    someDumbFunction()
-
+    // Here it can fail, so instead of `if err  != nil` we use `errlog.Debug(err)`
     if err := someNastyFunction(); errlog.Debug(err) {
         return
     }
 
-    someSmallFunction()
-
-    someDumbFunction()
-}
-
-func wrapingFunc() {
-    someBigFunction()
+    someSmallFunction() // just random calls
+    someDumbFunction() // just random calls
 }
 
 func someSmallFunction() {
@@ -118,11 +120,11 @@ func someSmallFunction() {
 }
 
 func someNastyFunction() error {
-    return errors.New("I'm failing for some reason")
+    return errors.New("I'm failing for some reason") // simulate an error
 }
 
 func someDumbFunction() bool {
-    return false
+    return false // just random things
 }
 ```
 
@@ -132,11 +134,11 @@ func someDumbFunction() bool {
 ![Console Output examples/basic.go](https://i.imgur.com/tOkDgwP.png)
 
 
-We are able to detect and point out which line is causing the error.
+We are able to **detect and point out which line is causing the error**.
 
 ### Custom Configuration Example
 
-Let's see what we can do with a custom configuration.
+Let's see what we can do with a **custom configuration.**
 
 ```golang
 debug := errlog.NewLogger(&errlog.Config{
@@ -164,7 +166,7 @@ debug := errlog.NewLogger(&errlog.Config{
 
 ### When the failing func call is a few lines away
 
-Errlog finds the exact line where the error is defined.
+Even when the func call is a few lines away, there is no problem for finding it.
 
 #### Output
 
@@ -174,7 +176,7 @@ Errlog finds the exact line where the error is defined.
 
 Documentation can be found here : [![Documentation](https://godoc.org/github.com/snwfdhmp/errlog?status.svg)](http://godoc.org/github.com/snwfdhmp/errlog)
 
-## Feedback
+## Feedbacks
 
 Feel free to open an issue for any feedback or suggestion.
 
