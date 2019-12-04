@@ -85,7 +85,7 @@ func (l *logger) Debug(uErr error) bool {
 	}
 
 	stLines := parseStackTrace(1 + l.stackDepthOverload)
-	if len(stLines) < 1 {
+	if stLines == nil || len(stLines) < 1 {
 		l.Printf("Error: %s", uErr)
 		l.Printf("Errlog tried to debug the error but the stack trace seems empty. If you think this is an error, please open an issue at https://github.com/snwfdhmp/errlog/issues/new and provide us logs to investigate.")
 		return true
@@ -107,6 +107,8 @@ func (l *logger) Debug(uErr error) bool {
 	if l.config.ExitOnDebugSuccess {
 		os.Exit(1)
 	}
+
+	l.stackDepthOverload = 0
 
 	return true
 }
@@ -148,7 +150,7 @@ func (l *logger) DebugSource(filepath string, debugLineNumber int) {
 	if failingLineIndex != -1 {
 		l.Printf("line %d of %s:%d", failingLineIndex+1, filepathShort, failingLineIndex+1)
 	} else {
-		l.Printf("error in %s (failing line not found, stack trace says func call is at line %d)", filepathShort, debugLineNumber+1)
+		l.Printf("error in %s (failing line not found, stack trace says func call is at line %d)", filepathShort, debugLineNumber)
 	}
 
 	l.PrintSource(lines, PrintSourceOptions{

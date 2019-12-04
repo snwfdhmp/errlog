@@ -38,7 +38,11 @@ type StackTraceItem struct {
 }
 
 func parseStackTrace(deltaDepth int) []StackTraceItem {
-	stack := strings.Join(strings.Split(string(debug.Stack()), "\n")[2*(2+deltaDepth):], "\n") //get stack trace and reduce to desired sire
+	stackArr := strings.Split(string(debug.Stack()), "\n")
+	if len(stackArr) < 2*(2+deltaDepth) {
+		return nil
+	}
+	stack := strings.Join(stackArr[2*(2+deltaDepth):], "\n") //get stack trace and reduce to desired size
 	parsedRes := regexpParseStack.FindAllStringSubmatch(stack, -1)
 
 	sti := make([]StackTraceItem, len(parsedRes))
