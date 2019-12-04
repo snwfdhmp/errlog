@@ -10,12 +10,12 @@ import (
 func main() {
 	fmt.Println("Example start")
 
-	wrapingFunc()
+	wrappingFunc()
 
 	fmt.Println("Example end")
 }
 
-func wrapingFunc() {
+func wrappingFunc() {
 	someBigFunction()
 }
 
