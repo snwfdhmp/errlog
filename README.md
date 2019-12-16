@@ -46,7 +46,7 @@ func someFunc() {
 }
 ```
 
-In production, call `errlog.Disable(true)` to enable no-op (equivalent to `if err != nil`)
+In production, call `errlog.DefaultLogger.Disable(true)` to enable no-op (equivalent to `if err != nil`)
 
 ## Tweak as you need
 
