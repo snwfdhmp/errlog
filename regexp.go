@@ -22,7 +22,7 @@ var (
 	regexpHexNumber                  = regexp.MustCompile(`0x[0-9a-f]+`)
 	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
-	regexpParseDebugLineParseVarName = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
+	regexpParseDebugLineParseVarName = regexp.MustCompile(`[\.]Debug[\(](.*)\)`)
 	regexpFindVarDefinition          = func(varName string) *regexp.Regexp {
 		return regexp.MustCompile(fmt.Sprintf(`%s[\s\:]*={1}([\s]*[a-zA-Z0-9\._]+)`, varName))
 	}
