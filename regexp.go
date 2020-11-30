@@ -18,7 +18,7 @@ var (
 		Unfortunately, I didn't check against other code formatting tools, so it may require some evolution.
 		Feel free to create an issue or send a PR.
 	*/
-	regexpParseStack                 = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9_]*\.)+[a-zA-Z0-9_]+)\(((?:(?:0x[0-9a-f]+)|(?:...)[,\s]*)+)*\)[\s]+([/\-a-zA-Z0-9\._]+)[:]([0-9]+)[\s](?:\+0x([0-9a-f]+))*`)
+	regexpParseStack                 = regexp.MustCompile(`((?:(?:[a-zA-Z._-]+)[/])*(?:[*a-zA-Z0-9_]*\.)+[a-zA-Z0-9_]+)\(((?:(?:0x[0-9a-f]+)|(?:...)[,\s]*)+)*\)[\s]+([/:\-a-zA-Z0-9\._]+)[:]([0-9]+)[\s](?:\+0x([0-9a-f]+))*`)
 	regexpHexNumber                  = regexp.MustCompile(`0x[0-9a-f]+`)
 	regexpFuncLine                   = regexp.MustCompile(`^func[\s][a-zA-Z0-9]+[(](.*)[)][\s]*{`)
 	regexpParseDebugLineFindFunc     = regexp.MustCompile(`[\.]Debug[\(](.*)[/)]`)
@@ -34,11 +34,16 @@ type StackTraceItem struct {
 	Args          []string
 	SourcePathRef string
 	SourceLineRef int
-	MysteryNumber int64
+	MysteryNumber int64 // don't know what this is, no documentation found, if you know please let me know via a PR !
 }
 
 func parseStackTrace(deltaDepth int) []StackTraceItem {
-	stackArr := strings.Split(string(debug.Stack()), "\n")
+	fmt.Println(string(debug.Stack()))
+	return parseAnyStackTrace(string(debug.Stack()), deltaDepth)
+}
+
+func parseAnyStackTrace(stackStr string, deltaDepth int) []StackTraceItem {
+	stackArr := strings.Split(stackStr, "\n")
 	if len(stackArr) < 2*(2+deltaDepth) {
 		return nil
 	}
@@ -47,6 +52,12 @@ func parseStackTrace(deltaDepth int) []StackTraceItem {
 
 	sti := make([]StackTraceItem, len(parsedRes))
 	for i := range parsedRes {
+		fmt.Println("----")
+		fmt.Println("----")
+		fmt.Println("----")
+		for _, v := range parsedRes {
+			fmt.Printf("- %s\n", v)
+		}
 		args := regexpHexNumber.FindAllString(parsedRes[i][2], -1)
 		srcLine, err := strconv.Atoi(parsedRes[i][4])
 		if Debug(err) {
