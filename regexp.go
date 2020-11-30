@@ -52,12 +52,6 @@ func parseAnyStackTrace(stackStr string, deltaDepth int) []StackTraceItem {
 
 	sti := make([]StackTraceItem, len(parsedRes))
 	for i := range parsedRes {
-		fmt.Println("----")
-		fmt.Println("----")
-		fmt.Println("----")
-		for _, v := range parsedRes {
-			fmt.Printf("- %s\n", v)
-		}
 		args := regexpHexNumber.FindAllString(parsedRes[i][2], -1)
 		srcLine, err := strconv.Atoi(parsedRes[i][4])
 		if Debug(err) {
