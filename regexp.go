@@ -38,7 +38,6 @@ type StackTraceItem struct {
 }
 
 func parseStackTrace(deltaDepth int) []StackTraceItem {
-	fmt.Println(string(debug.Stack()))
 	return parseAnyStackTrace(string(debug.Stack()), deltaDepth)
 }
 
